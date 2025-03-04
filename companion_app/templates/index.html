@@ -425,17 +425,40 @@
                 addMessage(data.response);
                 
                 if (data.audio) {
+                    // Stop recognition before playing audio
+                    if (recognition) {
+                        recognition.stop();
+                    }
+                    
                     const audio = new Audio(`data:audio/mp3;base64,${data.audio}`);
+                    
+                    // Add event listener for when audio finishes
+                    audio.onended = () => {
+                        isProcessing = false;
+                        vadStatus.textContent = isSpeaking ? 'Listening...' : 'Talk';
+                        vadStatus.classList.toggle('active', isSpeaking);
+                        // Restart recognition after audio finishes
+                        setTimeout(() => {
+                            startContinuousListening();
+                        }, 100);
+                    };
+                    
                     await audio.play();
+                } else {
+                    isProcessing = false;
+                    vadStatus.textContent = isSpeaking ? 'Listening...' : 'Talk';
+                    vadStatus.classList.toggle('active', isSpeaking);
                 }
             } catch (error) {
                 console.error('Error:', error);
                 showError('Error processing your request');
-            } finally {
                 isProcessing = false;
-                // Reset status based on current voice detection
                 vadStatus.textContent = isSpeaking ? 'Listening...' : 'Talk';
                 vadStatus.classList.toggle('active', isSpeaking);
+                // Restart recognition if there was an error
+                setTimeout(() => {
+                    startContinuousListening();
+                }, 100);
             }
         }
 
