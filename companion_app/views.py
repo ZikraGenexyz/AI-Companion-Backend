@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 import base64
 import logging
 import traceback
+import webrtcvad
 from cartesia import Cartesia
 
 # Configure logging
@@ -19,10 +20,9 @@ logger = logging.getLogger(__name__)
 # Load environment variables
 load_dotenv()
 
-# Configure audio file storage
-AUDIO_STORAGE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-logger.debug(f"Audio storage directory: {AUDIO_STORAGE_DIR}")
-os.makedirs(AUDIO_STORAGE_DIR, exist_ok=True)
+# Initialize VAD
+vad = webrtcvad.Vad()
+vad.set_mode(1)  # Set aggressiveness mode (0-3)
 
 # Initialize Groq client
 groq_client = groq.Groq(api_key=os.getenv('GROQ_API_KEY'))
