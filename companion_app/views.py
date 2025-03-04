@@ -37,7 +37,8 @@ def process_audio(request):
         # Get the text from the request
         data = json.loads(request.body)
         text = data.get('text')
-        
+        use_cartesia = data.get('useCartesia')
+
         if not text:
             logger.error("No text provided in request")
             return JsonResponse({'error': 'No text provided'}, status=400)
@@ -69,39 +70,44 @@ def process_audio(request):
                         "content": text
                     }
                 ],
-                model="mixtral-8x7b-32768",
+                model="deepseek-r1-distill-qwen-32b",
                 temperature=0.7,
                 max_tokens=1000,
             )
             
             ai_response = chat_completion.choices[0].message.content
-            logger.debug(f"AI response generated: {ai_response}")
-            
-            # Convert AI response to speech using Cartesia
-            logger.debug("Converting response to speech with Cartesia")
-            output_format = {
-                "container": "mp3",
-                "encoding": "mp3",
-                "sample_rate": 44100,
-                "bit_rate": 128000
-            }
+            ai_response = ai_response.split("</think>")[-1]
 
-            # Add natural pauses with punctuation
-            speech_response = ai_response
-            speech_response = speech_response.replace('!', '! ')
-            speech_response = speech_response.replace('?', '? ')
-            speech_response = speech_response.replace('.', '. ')
+            if use_cartesia:
+                # Convert AI response to speech using Cartesia
+                logger.debug("Converting response to speech with Cartesia")
+                output_format = {
+                    "container": "mp3",
+                    "encoding": "mp3",
+                    "sample_rate": 44100,
+                    "bit_rate": 128000
+                }
+
+                # Add natural pauses with punctuation
+                speech_response = ai_response
+                speech_response = speech_response.replace('!', '! ')
+                speech_response = speech_response.replace('?', '? ')
+                speech_response = speech_response.replace('.', '. ')
             
-            # Generate speech using Cartesia with cheerful voice
-            audio_data = cartesia_client.tts.bytes(
-                model_id="sonic-english",
-                transcript=speech_response,
-                voice_id="694f9389-aac1-45b6-b726-9d9369183238",
-                output_format=output_format
-            )
+                # Generate speech using Cartesia with cheerful voice
+                audio_data = cartesia_client.tts.bytes(
+                    model_id="sonic-english",
+                    transcript=speech_response,
+                    voice_id="694f9389-aac1-45b6-b726-9d9369183238",
+                    output_format=output_format
+                )
             
-            # Convert audio data directly to base64 without saving to file
-            audio_base64 = base64.b64encode(audio_data).decode('utf-8')
+                # Convert audio data directly to base64 without saving to file
+                audio_base64 = base64.b64encode(audio_data).decode('utf-8')
+
+            else:
+                
+                audio_base64 = None
             
             logger.debug("Processing completed successfully")
             
