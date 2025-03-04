@@ -30,17 +30,6 @@ groq_client = groq.Groq(api_key=os.getenv('GROQ_API_KEY'))
 # Initialize Cartesia client
 cartesia_client = Cartesia(api_key=os.getenv('CARTESIA_API_KEY'))
 
-def get_audio_file_paths():
-    """
-    Generate unique file paths for audio files.
-    
-    Returns:
-        tuple: (input_wav_path, response_mp3_path)
-    """
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    response_mp3_path = os.path.join(AUDIO_STORAGE_DIR, f"response_{timestamp}.mp3")
-    return response_mp3_path
-
 # Create your views here.
 def myapp(request):
     return render(request, 'index.html')
@@ -48,7 +37,6 @@ def myapp(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def process_audio(request):
-    response_mp3_path = None
     try:
         logger.debug("Starting text processing")
         # Get the text from the request
@@ -58,10 +46,6 @@ def process_audio(request):
         if not text:
             logger.error("No text provided in request")
             return JsonResponse({'error': 'No text provided'}, status=400)
-
-        # Get file path for response audio
-        response_mp3_path = get_audio_file_paths()
-        logger.debug(f"Response MP3 path: {response_mp3_path}")
 
         try:
             # Generate AI response using Groq
@@ -121,48 +105,16 @@ def process_audio(request):
                 output_format=output_format
             )
             
-            # Save the audio data
-            logger.debug("Saving response audio")
-            try:
-                # Ensure the directory exists
-                os.makedirs(os.path.dirname(response_mp3_path), exist_ok=True)
-                logger.debug(f"Directory created/verified: {os.path.dirname(response_mp3_path)}")
-                
-                # Save the file
-                with open(response_mp3_path, 'wb') as f:
-                    f.write(audio_data)
-                logger.debug(f"Response audio saved to: {response_mp3_path}")
-                
-                # Verify the file exists
-                if not os.path.exists(response_mp3_path):
-                    raise FileNotFoundError(f"Failed to create audio file at {response_mp3_path}")
-                
-                # Read the audio file and convert to base64
-                logger.debug("Converting response audio to base64")
-                with open(response_mp3_path, 'rb') as audio_file:
-                    audio_data = audio_file.read()
-                    audio_base64 = base64.b64encode(audio_data).decode('utf-8')
-                
-                logger.debug("Processing completed successfully")
-                
-                # Delete the audio file after sending
-                try:
-                    os.remove(response_mp3_path)
-                    logger.debug(f"Deleted audio file: {response_mp3_path}")
-                except Exception as e:
-                    logger.error(f"Error deleting audio file: {str(e)}")
-                
-                return JsonResponse({
-                    'success': True,
-                    'response': ai_response,
-                    'audio': audio_base64
-                })
-            except Exception as e:
-                logger.error(f"Error saving/reading audio file: {str(e)}")
-                logger.error(traceback.format_exc())
-                return JsonResponse({
-                    'error': f'Error processing audio file: {str(e)}'
-                }, status=500)
+            # Convert audio data directly to base64 without saving to file
+            audio_base64 = base64.b64encode(audio_data).decode('utf-8')
+            
+            logger.debug("Processing completed successfully")
+            
+            return JsonResponse({
+                'success': True,
+                'response': ai_response,
+                'audio': audio_base64
+            })
             
         except Exception as e:
             logger.error(f"Error processing text: {str(e)}")
