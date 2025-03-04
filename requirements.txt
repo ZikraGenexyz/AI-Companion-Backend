@@ -1,0 +1,9 @@
+Django>=5.1.6
+SpeechRecognition>=3.10.0
+groq>=0.18.0
+python-dotenv>=1.0.1
+cartesia>=1.4.0
+pydub>=0.25.1
+ffmpeg-python>=0.2.0
+openai-whisper>=20231117
+certifi>=2024.2.2 

@@ -1,1 +1,1 @@
-# AI-Companion-Backend
+# AI-Companion
