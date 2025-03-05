@@ -391,6 +391,8 @@
             async function initializeContinuousListening() {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    window.activeStream = stream;  // Store stream reference for cleanup
+                    window.audioContext = new AudioContext();
                     setupVAD(stream);
 
                     if ('webkitSpeechRecognition' in window) {
@@ -409,16 +411,19 @@
                 } catch (error) {
                     console.error('Error initializing:', error);
                     showError('Error accessing microphone');
+                    isMicActive = false;
+                    micButton.classList.remove('active');
+                    textInput.disabled = false;
+                    vadStatus.style.display = 'none';
                 }
             }
 
             function setupVAD(stream) {
-                const audioContext = new AudioContext();
-                const source = audioContext.createMediaStreamSource(stream);
-                const processor = audioContext.createScriptProcessor(4096, 1, 1);
+                const source = window.audioContext.createMediaStreamSource(stream);
+                const processor = window.audioContext.createScriptProcessor(4096, 1, 1);
 
                 source.connect(processor);
-                processor.connect(audioContext.destination);
+                processor.connect(window.audioContext.destination);
 
                 let voiceHistory = new Array(5).fill(false);
 
@@ -455,8 +460,21 @@
 
             function setupRecognition() {
                 let silenceTimer = null;
+                let networkRetryCount = 0;
+                const MAX_RETRIES = 3;
+
+                function logError(error, details = {}) {
+                    const errorLog = {
+                        timestamp: new Date().toISOString(),
+                        error: error,
+                        details: details
+                    };
+                    console.error('Speech Recognition Error Log:', errorLog);
+                }
 
                 recognition.onresult = (event) => {
+                    // Reset network retry count on successful result
+                    networkRetryCount = 0;
                     const result = event.results[event.results.length - 1];
                     currentTranscript = result[0].transcript;
 
@@ -476,11 +494,67 @@
                 };
 
                 recognition.onerror = (event) => {
-                    console.error('Recognition error:', event.error);
-                    if (event.error !== 'no-speech') {
+                    const errorDetails = {
+                        errorType: event.error,
+                        timestamp: new Date().toISOString(),
+                        browser: navigator.userAgent,
+                        retryCount: networkRetryCount
+                    };
+                    
+                    logError('Recognition error occurred', errorDetails);
+
+                    if (event.error === 'network') {
+                        networkRetryCount++;
+                        logError('Network error in speech recognition', {
+                            ...errorDetails,
+                            networkStatus: navigator.onLine ? 'online' : 'offline'
+                        });
+
+                        if (networkRetryCount <= MAX_RETRIES) {
+                            showError(`Network connection issue. Retrying... (Attempt ${networkRetryCount}/${MAX_RETRIES})`);
+                            setTimeout(() => {
+                                if (isMicActive) {
+                                    restartRecognition();
+                                }
+                            }, 2000);
+                        } else {
+                            logError('Max network retries reached', errorDetails);
+                            showError('Network connection failed. Please check your internet connection and try again.');
+                            isMicActive = false;
+                            micButton.classList.remove('active');
+                            vadStatus.style.display = 'none';
+                            textInput.disabled = false;
+                            textInput.placeholder = 'Type a message...';
+                        }
+                    } else if (event.error === 'no-speech') {
+                        // Just log no-speech errors without showing to user
+                        logError('No speech detected', errorDetails);
+                    } else if (event.error === 'audio-capture') {
+                        logError('Audio capture error', errorDetails);
+                        showError('Could not access microphone. Please check your microphone settings.');
+                    } else if (event.error === 'not-allowed') {
+                        logError('Microphone permission denied', errorDetails);
+                        showError('Microphone access was denied. Please enable microphone access to use voice features.');
+                    } else if (event.error === 'aborted') {
+                        logError('Recognition aborted', errorDetails);
+                    } else {
+                        logError('Unknown recognition error', errorDetails);
                         showError(`Speech recognition error: ${event.error}`);
                     }
-                    restartRecognition();
+                };
+
+                recognition.onend = () => {
+                    logError('Recognition ended', {
+                        timestamp: new Date().toISOString(),
+                        isProcessing,
+                        isMicActive,
+                        networkRetryCount
+                    });
+                    
+                    if (isMicActive && !isProcessing) {
+                        console.log('Restarting recognition...');
+                        restartRecognition();
+                    }
                 };
             }
 
@@ -499,8 +573,22 @@
                         try {
                             recognition.start();
                         } catch (error) {
-                            console.error('Error restarting recognition:', error);
-                            setTimeout(restartRecognition, 1000);
+                            console.error('Error restarting recognition:', {
+                                error: error.message,
+                                timestamp: new Date().toISOString(),
+                                type: error.name
+                            });
+                            
+                            if (error.name === 'NotAllowedError') {
+                                showError('Microphone permission denied. Please enable microphone access.');
+                                isMicActive = false;
+                                micButton.classList.remove('active');
+                                vadStatus.style.display = 'none';
+                                textInput.disabled = false;
+                                textInput.placeholder = 'Type a message...';
+                            } else {
+                                setTimeout(restartRecognition, 2000);
+                            }
                         }
                     }, 100);
                 }
@@ -652,9 +740,30 @@
                         vadStatus.classList.add('active');
                         textInput.placeholder = 'Voice input active...';
                     } else {
+                        // Stop recognition
                         if (recognition) {
                             recognition.stop();
+                            recognition = null;  // Reset recognition object
                         }
+                        
+                        // Stop any active audio context
+                        if (window.audioContext) {
+                            window.audioContext.close().then(() => {
+                                window.audioContext = null;
+                            });
+                        }
+
+                        // Stop any active media streams
+                        if (window.activeStream) {
+                            window.activeStream.getTracks().forEach(track => {
+                                track.stop();
+                            });
+                            window.activeStream = null;
+                        }
+
+                        isSpeaking = false;
+                        isProcessing = false;
+                        currentTranscript = '';
                         vadStatus.textContent = 'Talk';
                         vadStatus.classList.remove('active');
                         textInput.placeholder = 'Type a message...';
