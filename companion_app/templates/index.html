@@ -458,19 +458,50 @@
                 };
             }
 
+            function logError(error, details = {}) {
+                const errorLog = {
+                    timestamp: new Date().toISOString(),
+                    error: error,
+                    details: details
+                };
+                console.error('Speech Recognition Error Log:', errorLog);
+                
+                // Create a detailed error message for the chat
+                let errorMessage = `Error: ${error}\n`;
+                if (details.errorType) {
+                    errorMessage += `Type: ${details.errorType}\n`;
+                }
+                if (details.networkStatus) {
+                    errorMessage += `Network Status: ${details.networkStatus}\n`;
+                }
+                if (details.retryCount !== undefined) {
+                    errorMessage += `Retry Attempt: ${details.retryCount}\n`;
+                }
+                
+                showDetailedError(errorMessage.trim());
+            }
+
+            function showDetailedError(message) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'message ai-message error-message';
+                
+                // Split the message by newlines and create separate lines
+                const lines = message.split('\n');
+                lines.forEach((line, index) => {
+                    if (index > 0) {
+                        errorDiv.appendChild(document.createElement('br'));
+                    }
+                    errorDiv.appendChild(document.createTextNode(line));
+                });
+                
+                messagesContainer.appendChild(errorDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+
             function setupRecognition() {
                 let silenceTimer = null;
                 let networkRetryCount = 0;
                 const MAX_RETRIES = 3;
-
-                function logError(error, details = {}) {
-                    const errorLog = {
-                        timestamp: new Date().toISOString(),
-                        error: error,
-                        details: details
-                    };
-                    console.error('Speech Recognition Error Log:', errorLog);
-                }
 
                 recognition.onresult = (event) => {
                     // Reset network retry count on successful result
@@ -498,28 +529,26 @@
                         errorType: event.error,
                         timestamp: new Date().toISOString(),
                         browser: navigator.userAgent,
-                        retryCount: networkRetryCount
+                        retryCount: networkRetryCount,
+                        networkStatus: navigator.onLine ? 'Connected' : 'Disconnected'
                     };
                     
-                    logError('Recognition error occurred', errorDetails);
-
                     if (event.error === 'network') {
                         networkRetryCount++;
-                        logError('Network error in speech recognition', {
+                        logError('Network Error in Speech Recognition', {
                             ...errorDetails,
-                            networkStatus: navigator.onLine ? 'online' : 'offline'
+                            message: networkRetryCount <= MAX_RETRIES ? 
+                                `Attempting to reconnect (${networkRetryCount}/${MAX_RETRIES})` :
+                                'Max retry attempts reached. Please check your connection.'
                         });
 
                         if (networkRetryCount <= MAX_RETRIES) {
-                            showError(`Network connection issue. Retrying... (Attempt ${networkRetryCount}/${MAX_RETRIES})`);
                             setTimeout(() => {
                                 if (isMicActive) {
                                     restartRecognition();
                                 }
                             }, 2000);
                         } else {
-                            logError('Max network retries reached', errorDetails);
-                            showError('Network connection failed. Please check your internet connection and try again.');
                             isMicActive = false;
                             micButton.classList.remove('active');
                             vadStatus.style.display = 'none';
@@ -528,31 +557,36 @@
                         }
                     } else if (event.error === 'no-speech') {
                         // Just log no-speech errors without showing to user
-                        logError('No speech detected', errorDetails);
+                        logError('No Speech Detected', errorDetails);
                     } else if (event.error === 'audio-capture') {
-                        logError('Audio capture error', errorDetails);
-                        showError('Could not access microphone. Please check your microphone settings.');
+                        logError('Microphone Error', {
+                            ...errorDetails,
+                            message: 'Could not access microphone. Please check your settings.'
+                        });
                     } else if (event.error === 'not-allowed') {
-                        logError('Microphone permission denied', errorDetails);
-                        showError('Microphone access was denied. Please enable microphone access to use voice features.');
+                        logError('Permission Denied', {
+                            ...errorDetails,
+                            message: 'Microphone access was denied. Please enable microphone access.'
+                        });
                     } else if (event.error === 'aborted') {
-                        logError('Recognition aborted', errorDetails);
+                        logError('Recognition Aborted', errorDetails);
                     } else {
-                        logError('Unknown recognition error', errorDetails);
-                        showError(`Speech recognition error: ${event.error}`);
+                        logError('Unknown Recognition Error', {
+                            ...errorDetails,
+                            message: `Unexpected error: ${event.error}`
+                        });
                     }
                 };
 
                 recognition.onend = () => {
-                    logError('Recognition ended', {
-                        timestamp: new Date().toISOString(),
-                        isProcessing,
-                        isMicActive,
-                        networkRetryCount
-                    });
-                    
                     if (isMicActive && !isProcessing) {
-                        console.log('Restarting recognition...');
+                        logError('Recognition Session Ended', {
+                            timestamp: new Date().toISOString(),
+                            isProcessing,
+                            isMicActive,
+                            networkRetryCount,
+                            message: 'Attempting to restart recognition...'
+                        });
                         restartRecognition();
                     }
                 };
