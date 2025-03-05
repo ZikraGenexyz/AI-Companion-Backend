@@ -431,7 +431,7 @@
                     const input = e.inputBuffer.getChannelData(0);
                     const rms = Math.sqrt(input.reduce((acc, val) => acc + (val * val), 0) / input.length);
 
-                    const threshold = 0.015;
+                    const threshold = 0.001;
 
                     // Update voice history
                     voiceHistory.shift();
