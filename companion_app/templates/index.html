@@ -12,7 +12,7 @@
             background-color: #f5f5f5;
             height: 100vh;
             display: flex;
-            flex-direction: column;
+            /* flex-direction: column; */
         }
         .container {
             flex: 1;
@@ -36,14 +36,16 @@
             display: flex;
             flex-direction: column;
             position: relative;
-            overflow: hidden;
+            overflow: auto;
+            max-height: 80vh; /* Fixed height for chat box */
         }
         .messages-container {
             flex: 1;
             overflow-y: auto;
-            margin-bottom: 80px;
-            padding: 20px;
+            padding: 20px 20px 20px 20px;
             background: linear-gradient(to bottom, #ffffff, #f8f9fa);
+            height: 80%;
+            scroll-behavior: smooth;
         }
         .message {
             margin: 10px 0;
@@ -53,6 +55,17 @@
             word-wrap: break-word;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
             position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         .user-message {
             background-color: #007AFF;
@@ -79,10 +92,10 @@
             align-items: center;
             box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
         }
-        .mic-button {
-            width: 60px;
-            height: 60px;
-            border-radius: 30px;
+        .mic-button {            
+            min-width: 54px;
+            height: 54px;
+            border-radius: 50%;
             background-color: #007AFF;
             border: none;
             cursor: pointer;
@@ -90,23 +103,18 @@
             align-items: center;
             justify-content: center;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0,122,255,0.3);
+            margin-right: 20px;
+            margin-left: 10px;
         }
         .mic-button:hover {
             background-color: #0056b3;
             transform: scale(1.05);
-            box-shadow: 0 6px 16px rgba(0,122,255,0.4);
         }
-        .mic-button.recording {
+        .mic-button.active {
             background-color: #ff3b30;
             animation: pulse 1.5s infinite;
-            box-shadow: 0 4px 12px rgba(255,59,48,0.3);
         }
-        .mic-button.recording:hover {
-            background-color: #d63029;
-            box-shadow: 0 6px 16px rgba(255,59,48,0.4);
-        }
-        .mic-icon {
+        .mic-button svg {
             width: 24px;
             height: 24px;
             fill: white;
@@ -173,7 +181,7 @@
         }
         /* Custom scrollbar for messages container */
         .messages-container::-webkit-scrollbar {
-            width: 8px;
+            display: none;
         }
         .messages-container::-webkit-scrollbar-track {
             background: #f1f1f1;
@@ -202,9 +210,7 @@
         }
         /* Toggle Switch Styles */
         .toggle-switch {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
+            position: relative;
             display: inline-block;
             width: 60px;
             height: 34px;
@@ -243,11 +249,100 @@
             transform: translateX(26px);
         }
         .toggle-label {
-            position: absolute;
-            left: 90px;
-            bottom: 30px;
+            flex: 1;
+            text-align: center;
             color: #666;
             font-size: 14px;
+            margin-right: 5px;
+        }
+        .toggle-container {
+            flex: 1;
+            display: flex;
+            padding-left: 20px;
+            padding-right: 15px;
+            align-items: center;
+            justify-content: center;
+        }
+        .cartesia-button {            
+            min-width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background-color: #ccc;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+            font-family: 'Arial', sans-serif;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+        }
+        .cartesia-button:hover {
+            transform: scale(1.05);
+        }
+        .cartesia-button.active {
+            background-color: #007AFF;
+        }
+        .cartesia-button svg {
+            width: 24px;
+            height: 24px;
+            fill: white;
+        }
+        /* Text Input Styles */
+        .input-container {
+            width: 100%;
+            height: 20%;
+            display: flex;
+            align-items: center;
+        }
+        .text-input {
+            width: 70%;
+            height: 34px;
+            padding: 8px 15px 8px 15px;
+            margin-left: 15px;
+            border: 2px solid #ccc;
+            border-radius: 30px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s ease;
+            background-color: white;
+        }
+        .text-input:focus {
+            border-color: #007AFF;
+        }
+        .text-input:disabled {
+            background-color: #f5f5f5;
+            cursor: not-allowed;
+            border-color: #ddd;
+        }
+        .send-button {            
+            min-width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background-color: #34C759;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            margin-right: 20px;
+            margin-left: 10px;
+        }
+        .send-button:hover {
+            background-color: #2FB350;
+            transform: scale(1.05);
+        }
+        .send-button svg {
+            width: 18px;
+            height: 18px;
+            fill: white;
+        }
+        .hidden {
+            display: none;
         }
     </style>
 </head>
@@ -256,11 +351,25 @@
         <h1>AI Voice Assistant</h1>
         <div class="chat-box">
             <div class="messages-container" id="messagesContainer"></div>
-            <label class="toggle-switch">
-                <input id="toggle-cartesia" type="checkbox" id="modeToggle">
-                <span class="toggle-slider"></span>
-            </label>
-            <span class="toggle-label">Cartesia</span>
+            <div class="input-container">
+                <div class="toggle-container">  
+                    <button class="cartesia-button" id="cartesiaButton">
+                        C
+                    </button>
+                </div>
+                <input type="text" class="text-input" id="textInput" placeholder="Type a message...">
+                <button class="send-button hidden" id="sendButton">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                    </svg>
+                </button>
+                <button class="mic-button" id="micButton">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                        <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                    </svg>
+                </button>
+            </div>
         </div>
     </div>
     <div id="vadStatus" class="vad-status">Initializing...</div>
@@ -272,6 +381,7 @@
         let isProcessing = false;
         let currentTranscript = '';
         let isSpeaking = false;
+        let conversationHistory = [];
 
         async function initializeContinuousListening() {
             try {
@@ -333,7 +443,7 @@
                             vadStatus.textContent = 'Talk';
                             vadStatus.classList.remove('active');
                         }
-                    }, 700); // Small delay to prevent flickering
+                    }, 1000); // Small delay to prevent flickering
                 }
             };
         }
@@ -346,7 +456,7 @@
                 currentTranscript = result[0].transcript;
 
                 if (result.isFinal) {
-                    clearTimeout(silenceTimer);
+                    clearTimeout(silenceTimer);x
                     processText(currentTranscript);
                     currentTranscript = '';
                 } else {
@@ -411,7 +521,8 @@
                     },
                     body: JSON.stringify({ 
                         text: text,
-                        useCartesia: document.getElementById('toggle-cartesia').checked  
+                        useCartesia: document.getElementById('cartesiaButton').classList.contains('active'),
+                        conversationHistory: conversationHistory.slice(0, -1)
                     })
                 });
 
@@ -425,19 +536,16 @@
                 addMessage(data.response);
                 
                 if (data.audio) {
-                    // Stop recognition before playing audio
                     if (recognition) {
                         recognition.stop();
                     }
                     
                     const audio = new Audio(`data:audio/mp3;base64,${data.audio}`);
                     
-                    // Add event listener for when audio finishes
                     audio.onended = () => {
                         isProcessing = false;
                         vadStatus.textContent = isSpeaking ? 'Listening...' : 'Talk';
                         vadStatus.classList.toggle('active', isSpeaking);
-                        // Restart recognition after audio finishes
                         setTimeout(() => {
                             startContinuousListening();
                         }, 100);
@@ -455,7 +563,6 @@
                 isProcessing = false;
                 vadStatus.textContent = isSpeaking ? 'Listening...' : 'Talk';
                 vadStatus.classList.toggle('active', isSpeaking);
-                // Restart recognition if there was an error
                 setTimeout(() => {
                     startContinuousListening();
                 }, 100);
@@ -463,11 +570,20 @@
         }
 
         function addMessage(text, isUser = false) {
-            const messageDiv = document.createElement('div');
+            const messageDiv = document.createElement('p');
             messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
             messageDiv.textContent = text;
             messagesContainer.appendChild(messageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            conversationHistory.push({
+                role: isUser ? 'user' : 'assistant',
+                content: text
+            });
+            
+            if (conversationHistory.length > 10) {
+                conversationHistory.shift();
+            }
         }
 
         function showError(message) {
@@ -480,8 +596,76 @@
 
         // Initialize on page load
         window.addEventListener('load', () => {
-            addMessage("Hello! I'm your AI Voice Assistant. Just start speaking, and I'll listen.", false);
-            initializeContinuousListening();
+            const welcomeMessage = "Hello! I'm your AI Voice Assistant. Click the microphone button to start speaking.";
+            addMessage(welcomeMessage, false);
+            // Remove automatic microphone initialization
+            // initializeContinuousListening();
+
+            const textInput = document.getElementById('textInput');
+            const sendButton = document.getElementById('sendButton');
+            const micButton = document.getElementById('micButton');
+            const cartesiaButton = document.getElementById('cartesiaButton');
+            let isListening = false;
+            let cartesiaActive = false;
+
+            // Setup Cartesia button
+            cartesiaButton.addEventListener('click', () => {
+                cartesiaActive = !cartesiaActive;
+                cartesiaButton.classList.toggle('active', cartesiaActive);
+            });
+
+            function sendMessage() {
+                const text = textInput.value.trim();
+                if (text) {
+                    processText(text);
+                    textInput.value = '';
+                    toggleButtons();
+                }
+            }
+
+            function toggleButtons() {
+                const hasText = textInput.value.trim().length > 0;
+                sendButton.classList.toggle('hidden', !hasText);
+                micButton.classList.toggle('hidden', hasText);
+            }
+
+            function toggleMic() {
+                isListening = !isListening;
+                micButton.classList.toggle('active', isListening);
+                textInput.disabled = isListening;
+                vadStatus.style.display = isListening ? 'block' : 'none';
+                
+                if (isListening) {
+                    initializeContinuousListening();  // Initialize only when mic button is clicked
+                    vadStatus.textContent = 'Listening...';
+                    vadStatus.classList.add('active');
+                    textInput.placeholder = 'Voice input active...';
+                } else {
+                    if (recognition) {
+                        recognition.stop();
+                    }
+                    vadStatus.textContent = 'Talk';
+                    vadStatus.classList.remove('active');
+                    textInput.placeholder = 'Type a message...';
+                }
+            }
+
+            // Setup text input handling
+            textInput.addEventListener('input', toggleButtons);
+            textInput.addEventListener('keypress', (event) => {
+                if (event.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+
+            // Setup send button handling
+            sendButton.addEventListener('click', sendMessage);
+
+            // Setup mic button handling
+            micButton.addEventListener('click', toggleMic);
+
+            // Initial button state
+            toggleButtons();
         });
     </script>
 </body>

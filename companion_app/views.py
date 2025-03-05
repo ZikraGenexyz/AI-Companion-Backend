@@ -38,39 +38,50 @@ def process_audio(request):
         data = json.loads(request.body)
         text = data.get('text')
         use_cartesia = data.get('useCartesia')
+        conversation_history = data.get('conversationHistory', [])
 
         if not text:
             logger.error("No text provided in request")
             return JsonResponse({'error': 'No text provided'}, status=400)
 
         try:
+            # Prepare messages for Groq
+            messages = [
+                {
+                    "role": "system",
+                    "content": """You are a Robot, a friendly and enthusiastic robot companion with a playful personality. 
+                    You love helping people. Your responses should be:
+                    - Warm and friendly
+                    - Keep responses concise but engaging
+                    - Show genuine interest in the user
+                    - Use a casual, conversational tone
+                    - Sometimes add playful remarks or gentle humor
+                    - Always maintain a positive and encouraging attitude
+                    - Reference previous parts of the conversation when relevant
+                    - Maintain context from earlier exchanges
+                    
+                    Example responses:
+                    "Hey there! I'd love to help you with that!"
+                    "That's a great question! Let me think about it..."
+                    "Awesome! I'm excited to help you with this!"
+                    """
+                }
+            ]
+
+            # Add conversation history
+            messages.extend(conversation_history)
+            
+            # Add current user message
+            messages.append({
+                "role": "user",
+                "content": text
+            })
+
             # Generate AI response using Groq
             logger.debug("Generating AI response with Groq")
             chat_completion = groq_client.chat.completions.create(
-                messages=[
-                    {
-                        "role": "system",
-                        "content": """You are a Robot, a friendly and enthusiastic robot companion with a playful personality. 
-                        You love helping people. Your responses should be:
-                        - Warm and friendly
-                        - Keep responses concise but engaging
-                        - Show genuine interest in the user
-                        - Use a casual, conversational tone
-                        - Sometimes add playful remarks or gentle humor
-                        - Always maintain a positive and encouraging attitude
-                        
-                        Example responses:
-                        "Hey there! I'd love to help you with that!"
-                        "That's a great question! Let me think about it..."
-                        "Awesome! I'm excited to help you with this!"
-                        """
-                    },
-                    {
-                        "role": "user",
-                        "content": text
-                    }
-                ],
-                model="deepseek-r1-distill-qwen-32b",
+                messages=messages,
+                model="llama-3.2-3b-preview",
                 temperature=0.7,
                 max_tokens=1000,
             )
@@ -93,6 +104,7 @@ def process_audio(request):
                 speech_response = speech_response.replace('!', '! ')
                 speech_response = speech_response.replace('?', '? ')
                 speech_response = speech_response.replace('.', '. ')
+                speech_response = ' '.join(speech_response.split('*')[::2])
             
                 # Generate speech using Cartesia with cheerful voice
                 audio_data = cartesia_client.tts.bytes(
@@ -106,7 +118,7 @@ def process_audio(request):
                 audio_base64 = base64.b64encode(audio_data).decode('utf-8')
 
             else:
-                
+
                 audio_base64 = None
             
             logger.debug("Processing completed successfully")
