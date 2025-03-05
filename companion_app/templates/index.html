@@ -387,6 +387,7 @@
             let isSpeaking = false;
             let isMicActive = false;
             let conversationHistory = [];
+            let previousMicState = false;  // Track previous mic state
 
             async function initializeContinuousListening() {
                 try {
@@ -426,34 +427,65 @@
                 processor.connect(window.audioContext.destination);
 
                 let voiceHistory = new Array(5).fill(false);
+                
+                // VAD configuration
+                const VAD_CONFIG = {
+                    // Main threshold for voice detection
+                    VOICE_THRESHOLD: 0.001,
+                    // Number of samples above threshold to trigger voice detection
+                    MIN_VOICE_SAMPLES: 3,
+                    // Delay before considering voice has ended (ms)
+                    VOICE_END_DELAY: 700,
+                    // Size of voice detection history buffer
+                    HISTORY_SIZE: 5
+                };
+
+                // Initialize noise floor calibration
+                let noiseFloor = 0;
+                let calibrationCount = 0;
+                const CALIBRATION_SAMPLES = 20;
 
                 processor.onaudioprocess = function(e) {
                     const input = e.inputBuffer.getChannelData(0);
                     const rms = Math.sqrt(input.reduce((acc, val) => acc + (val * val), 0) / input.length);
 
-                    const threshold = 0.001;
+                    // Calibrate noise floor during first few samples
+                    if (calibrationCount < CALIBRATION_SAMPLES) {
+                        noiseFloor = (noiseFloor * calibrationCount + rms) / (calibrationCount + 1);
+                        calibrationCount++;
+                        return;
+                    }
 
-                    // Update voice history
+                    // Dynamic threshold based on noise floor
+                    const dynamicThreshold = Math.max(VAD_CONFIG.VOICE_THRESHOLD, noiseFloor * 2);
+
+                    // Update voice history with new sample
                     voiceHistory.shift();
-                    voiceHistory.push(rms > threshold);
+                    voiceHistory.push(rms > dynamicThreshold);
 
                     // Check if majority of recent samples were voice
-                    const isVoiceActive = voiceHistory.filter(Boolean).length >= 3;
+                    const isVoiceActive = voiceHistory.filter(Boolean).length >= VAD_CONFIG.MIN_VOICE_SAMPLES;
 
                     if (isVoiceActive && !isSpeaking) {
-                        // Voice started
+                        // Voice activity started
                         isSpeaking = true;
                         vadStatus.textContent = 'Listening...';
                         vadStatus.classList.add('active');
+                        
+                        // Update noise floor slowly during speech
+                        noiseFloor = noiseFloor * 0.95 + Math.min(rms, noiseFloor) * 0.05;
                     } else if (!isVoiceActive && isSpeaking) {
-                        // Voice ended
+                        // Voice activity ended
                         setTimeout(() => {
                             if (!isProcessing) {
                                 isSpeaking = false;
                                 vadStatus.textContent = 'Talk';
                                 vadStatus.classList.remove('active');
+                                
+                                // Update noise floor more quickly during silence
+                                noiseFloor = noiseFloor * 0.8 + rms * 0.2;
                             }
-                        }, 700); // Small delay to prevent flickering
+                        }, VAD_CONFIG.VOICE_END_DELAY);
                     }
                 };
             }
@@ -628,10 +660,38 @@
                 }
             }
 
+            function muteMic() {
+                if (window.activeStream) {
+                    previousMicState = isMicActive;  // Store current state
+                    window.activeStream.getAudioTracks().forEach(track => {
+                        track.enabled = false;  // Mute the track
+                    });
+                    if (recognition) {
+                        recognition.stop();
+                    }
+                    isMicActive = false;
+                    micButton.classList.remove('active');
+                    vadStatus.textContent = 'Processing...';
+                }
+            }
+
+            function unmuteMic() {
+                if (window.activeStream && previousMicState) {  // Only unmute if it was previously active
+                    window.activeStream.getAudioTracks().forEach(track => {
+                        track.enabled = true;  // Unmute the track
+                    });
+                    isMicActive = true;
+                    micButton.classList.add('active');
+                    startContinuousListening();
+                    vadStatus.textContent = 'Talk';
+                }
+            }
+
             async function processText(text) {
                 if (!text || text.trim() === '' || isProcessing) return;
 
                 isProcessing = true;
+                muteMic();  // Mute mic when processing starts
                 vadStatus.textContent = 'Processing...';
                 addMessage(text, true);
 
@@ -652,48 +712,34 @@
 
                     if (data.error) {
                         showError(data.error);
+                        unmuteMic();  // Unmute on error
                         return;
                     }
 
                     addMessage(data.response);
 
                     if (data.audio) {
-                        // Stop recognition before playing audio
-                        if (recognition) {
-                            recognition.stop();
-                        }
-                        
                         const audio = new Audio(`data:audio/mp3;base64,${data.audio}`);
                         
                         // Add event listener for when audio finishes
                         audio.onended = () => {
                             isProcessing = false;
+                            unmuteMic();  // Unmute after audio finishes
                             vadStatus.textContent = isSpeaking ? 'Listening...' : 'Talk';
                             vadStatus.classList.toggle('active', isSpeaking);
-                            // Restart recognition after audio finishes
-                            setTimeout(() => {
-                                startContinuousListening();
-                            }, 100);
                         };
                         
                         await audio.play();
                     } else {
                         isProcessing = false;
+                        unmuteMic();  // Unmute if no audio response
                         vadStatus.textContent = isSpeaking ? 'Listening...' : 'Talk';
                         vadStatus.classList.toggle('active', isSpeaking);
                     }
                 } catch (error) {
                     console.error('Error:', error);
                     showError('Error processing your request');
-                } finally {
-                    isProcessing = false;
-                    // Reset status based on current voice detection
-                    vadStatus.textContent = isSpeaking ? 'Listening...' : 'Talk';
-                    vadStatus.classList.toggle('active', isSpeaking);
-                    // Restart recognition if there was an error
-                    setTimeout(() => {
-                        startContinuousListening();
-                    }, 100);
+                    unmuteMic();  // Unmute on error
                 }
             }
 

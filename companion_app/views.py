@@ -59,6 +59,7 @@ def process_audio(request):
                     - Always maintain a positive and encouraging attitude
                     - Reference previous parts of the conversation when relevant
                     - Maintain context from earlier exchanges
+                    - respond with a shorter response
                     
                     Example responses:
                     "Hey there! I'd love to help you with that!"
