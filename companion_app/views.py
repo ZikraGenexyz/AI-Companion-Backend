@@ -4,7 +4,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 import json
 import os
-from datetime import datetime
 import groq
 from dotenv import load_dotenv
 import base64

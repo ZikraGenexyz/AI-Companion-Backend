@@ -508,20 +508,6 @@
                     details: details
                 };
                 console.error('Speech Recognition Error Log:', errorLog);
-                
-                // Create a detailed error message for the chat
-                let errorMessage = `Error: ${error}\n`;
-                if (details.errorType) {
-                    errorMessage += `Type: ${details.errorType}\n`;
-                }
-                if (details.networkStatus) {
-                    errorMessage += `Network Status: ${details.networkStatus}\n`;
-                }
-                if (details.retryCount !== undefined) {
-                    errorMessage += `Retry Attempt: ${details.retryCount}\n`;
-                }
-                
-                showDetailedError(errorMessage.trim());
             }
 
             function showDetailedError(message) {
