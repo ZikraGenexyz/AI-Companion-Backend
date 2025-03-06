@@ -11,6 +11,7 @@ import base64
 import logging
 import traceback
 from cartesia import Cartesia
+from .pydub_patch import patch_pydub  # Import the pydub patch
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
