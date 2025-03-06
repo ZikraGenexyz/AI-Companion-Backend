@@ -5,8 +5,8 @@ cartesia>=1.4.0
 pydub>=0.25.1
 ffmpeg-python>=0.2.0
 certifi>=2024.2.2 
-psycopg2-binary
-dj-database-url==2.3.0
-Django==5.1.6
-django-filter==25.1
-djangorestframework==3.15.2
+psycopg2-binary>=2.9.9
+dj-database-url>=2.3.0
+whitenoise>=6.0.0
+django-filter>=25.1
+djangorestframework>=3.15.2
