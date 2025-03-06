@@ -421,50 +421,61 @@
 
             function setupVAD(stream) {
                 const source = window.audioContext.createMediaStreamSource(stream);
-                const processor = window.audioContext.createScriptProcessor(4096, 1, 1);
+                // Reduce buffer size for faster processing
+                const processor = window.audioContext.createScriptProcessor(2048, 1, 1);
 
                 source.connect(processor);
                 processor.connect(window.audioContext.destination);
-
-                let voiceHistory = new Array(5).fill(false);
                 
-                // VAD configuration
+                // Optimized VAD configuration
                 const VAD_CONFIG = {
                     // Main threshold for voice detection
-                    VOICE_THRESHOLD: 0.001,
+                    VOICE_THRESHOLD: 0.01,
                     // Number of samples above threshold to trigger voice detection
                     MIN_VOICE_SAMPLES: 3,
                     // Delay before considering voice has ended (ms)
-                    VOICE_END_DELAY: 700,
+                    VOICE_END_DELAY: 1000,
                     // Size of voice detection history buffer
-                    HISTORY_SIZE: 5
+                    HISTORY_SIZE: 3
                 };
-
+                
+                let voiceHistory = new Array(VAD_CONFIG.HISTORY_SIZE).fill(false);
+                
                 // Initialize noise floor calibration
                 let noiseFloor = 0;
                 let calibrationCount = 0;
-                const CALIBRATION_SAMPLES = 20;
+                const CALIBRATION_SAMPLES = 10;  // Reduced calibration samples
 
+                // Pre-calculate array length for optimization
+                const processorLength = 2048;
+                
                 processor.onaudioprocess = function(e) {
                     const input = e.inputBuffer.getChannelData(0);
-                    const rms = Math.sqrt(input.reduce((acc, val) => acc + (val * val), 0) / input.length);
+                    
+                    // Optimized RMS calculation
+                    let sum = 0;
+                    for (let i = 0; i < processorLength; i += 4) { // Process every 4th sample
+                        sum += input[i] * input[i];
+                    }
+                    const rms = Math.sqrt(sum * 4 / processorLength);
 
-                    // Calibrate noise floor during first few samples
+                    // Quick calibration
                     if (calibrationCount < CALIBRATION_SAMPLES) {
                         noiseFloor = (noiseFloor * calibrationCount + rms) / (calibrationCount + 1);
                         calibrationCount++;
                         return;
                     }
 
-                    // Dynamic threshold based on noise floor
-                    const dynamicThreshold = Math.max(VAD_CONFIG.VOICE_THRESHOLD, noiseFloor * 2);
+                    // Simplified threshold calculation
+                    const dynamicThreshold = noiseFloor * 2.5 || VAD_CONFIG.VOICE_THRESHOLD;
 
-                    // Update voice history with new sample
+                    // Efficient voice detection
                     voiceHistory.shift();
                     voiceHistory.push(rms > dynamicThreshold);
 
-                    // Check if majority of recent samples were voice
-                    const isVoiceActive = voiceHistory.filter(Boolean).length >= VAD_CONFIG.MIN_VOICE_SAMPLES;
+                    // Quick count of true values
+                    const activeCount = voiceHistory.reduce((count, value) => count + (value ? 1 : 0), 0);
+                    const isVoiceActive = activeCount >= VAD_CONFIG.MIN_VOICE_SAMPLES;
 
                     if (isVoiceActive && !isSpeaking) {
                         // Voice activity started
@@ -816,8 +827,8 @@
                     
                     if (isMicActive) {
                         initializeContinuousListening();  // Initialize only when mic button is clicked
-                        vadStatus.textContent = 'Listening...';
-                        vadStatus.classList.add('active');
+                        // vadStatus.textContent = 'Listening...';
+                        // vadStatus.classList.add('active');
                         textInput.placeholder = 'Voice input active...';
                     } else {
                         // Stop recognition
