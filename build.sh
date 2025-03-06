@@ -2,10 +2,10 @@
 
 set -o errexit
 
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 
-python manage.py collectstatic --noinput
+python3 manage.py collectstatic --noinput
 
-python manage.py makemigrations
+python3 manage.py makemigrations
 
-python manage.py migrate
+python3 manage.py migrate
