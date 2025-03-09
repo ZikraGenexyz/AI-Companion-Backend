@@ -2,8 +2,9 @@ from django.shortcuts import render
 from companion_app import models
 from .serializers import UserSerializer, ChatsSerializer
 from rest_framework import generics
-from rest_framework.response import Response, HTTP_200_OK, HTTP_400_BAD_REQUEST
+from rest_framework.response import Response
 from django.contrib.auth import authenticate
+from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 
 # Create your views here.
 class ListUser(generics.ListCreateAPIView):
