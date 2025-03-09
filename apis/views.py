@@ -5,6 +5,7 @@ from rest_framework import generics
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
 
 # Create your views here.
 class ListUser(generics.ListCreateAPIView):
@@ -15,6 +16,7 @@ class HistoryChat(generics.ListCreateAPIView):
     queryset = models.Chat_History.objects.all()
     serializer_class = ChatsSerializer
 
+@csrf_protect
 def Login(request):
     if request.method == 'POST':
         email = request.POST.get('email')
