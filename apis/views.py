@@ -16,7 +16,7 @@ class HistoryChat(generics.ListCreateAPIView):
     queryset = models.Chat_History.objects.all()
     serializer_class = ChatsSerializer
 
-@csrf_protect
+@csrf_exempt
 def Login(request):
     if request.method == 'POST':
         email = request.POST.get('email')
