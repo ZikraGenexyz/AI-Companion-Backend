@@ -19,7 +19,13 @@ class HistoryChat(generics.ListCreateAPIView):
 
 @api_view(['POST'])
 def Login(request):
-    serializer = LoginSerializer(data=request.data)
-    if serializer.is_valid():
-        return Response(serializer.data, status=HTTP_200_OK)
-    return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+    if request.method == 'POST':
+        auth_data = request.data
+        user = authenticate(username=auth_data['username'], password=auth_data['password'])
+        if user is None:
+            return Response({'message': 'Invalid credentials'}, status=HTTP_400_BAD_REQUEST)
+        return Response({'message': 'Login successful'}, status=HTTP_200_OK)
+    # serializer = LoginSerializer(data=request.data)
+    # if serializer.is_valid():
+    #     return Response(serializer.data, status=HTTP_200_OK)
+    # return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
