@@ -21,5 +21,5 @@ class HistoryChat(generics.ListCreateAPIView):
 def Login(request):
     serializer = LoginSerializer(data=request.data)
     # if serializer.is_valid():
-    return Response(serializer.data, status=HTTP_200_OK)
+    return Response(status=HTTP_200_OK)
     # return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
