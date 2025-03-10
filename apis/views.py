@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from companion_app import models
-from .serializers import UserSerializer, ChatsSerializer, LoginSerializer
+from .serializers import UserSerializer, ChatsSerializer
 from rest_framework import generics
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
