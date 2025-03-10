@@ -15,6 +15,7 @@ class HistoryChat(generics.ListCreateAPIView):
     queryset = models.Chat_History.objects.all()
     serializer_class = ChatsSerializer
 
+@csrf_exempt
 def Login(request):
     serializer = LoginSerializer(data=request.data)
     if serializer.is_valid():
