@@ -7,6 +7,7 @@ from django.contrib.auth import authenticate
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.utils.decorators import method_decorator
+from rest_framework.decorators import api_view
 # Create your views here.
 class ListUser(generics.ListCreateAPIView):
     queryset = models.User_Data.objects.all()
@@ -16,9 +17,9 @@ class HistoryChat(generics.ListCreateAPIView):
     queryset = models.Chat_History.objects.all()
     serializer_class = ChatsSerializer
 
-@method_decorator(csrf_exempt, name='dispatch')
+@api_view(['POST'])
 def Login(request):
     serializer = LoginSerializer(data=request.data)
-    if serializer.is_valid():
-        return Response(serializer.data, status=HTTP_200_OK)
-    return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+    # if serializer.is_valid():
+    return Response(serializer.data, status=HTTP_200_OK)
+    # return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
