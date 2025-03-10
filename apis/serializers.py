@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from companion_app import models
 from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -27,3 +28,9 @@ class LoginSerializer(serializers.ModelSerializer):
             'password'
         )
         model = User
+
+    def validate(self, attrs):
+        user = authenticate(email=attrs['email'], password=attrs['password'])
+        if user is None:
+            raise serializers.ValidationError('Invalid credentials')
+        return attrs
