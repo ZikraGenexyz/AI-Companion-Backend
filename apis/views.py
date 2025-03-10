@@ -22,7 +22,11 @@ class HistoryChat(generics.ListCreateAPIView):
 def Login(request):
     if request.method == 'POST':
         auth_data = request.data
-        user = authenticate(username=auth_data['username'], password=auth_data['password'])
+        if '@' in auth_data['username']:
+            user = authenticate(email=auth_data['username'], password=auth_data['password'])
+        else:
+            user = authenticate(username=auth_data['username'], password=auth_data['password'])
+            
         if user is None:
             return Response({'message': 'Invalid credentials'}, status=HTTP_400_BAD_REQUEST)
         return Response({'message': 'Login successful'}, status=HTTP_200_OK)
