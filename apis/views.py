@@ -23,13 +23,20 @@ def Login(request):
     if request.method == 'POST':
         auth_data = request.data
         if '@' in auth_data['username']:
-            user = authenticate(email=auth_data['username'], password=auth_data['password'])
+            user = User.objects.get(email=auth_data['username'])
+            
+            if user.check_password(auth_data['password']):
+                return Response({'message': 'Login successful'}, status=HTTP_200_OK)
+            else:
+                return Response({'message': 'Invalid credentials'}, status=HTTP_400_BAD_REQUEST)
+
         else:
             user = authenticate(username=auth_data['username'], password=auth_data['password'])
-            
-        if user is None:
-            return Response({'message': 'Invalid credentials'}, status=HTTP_400_BAD_REQUEST)
-        return Response({'message': 'Login successful'}, status=HTTP_200_OK)
+
+            if user is None:
+                return Response({'message': 'Invalid credentials'}, status=HTTP_400_BAD_REQUEST)
+            else:
+                return Response({'message': 'Login successful'}, status=HTTP_200_OK)
 
 @api_view(['POST'])
 def CreateAccount(request):
