@@ -30,7 +30,7 @@ class LoginSerializer(serializers.ModelSerializer):
         model = User
 
     def validate(self, attrs):
-        # user = authenticate(email=attrs['email'], password=attrs['password'])
-        # if user is None:
-        #     raise serializers.ValidationError('Invalid credentials')
+        user = authenticate(username=attrs['username'], password=attrs['password'])
+        if user is None:
+            raise serializers.ValidationError('Invalid credentials')
         return attrs
