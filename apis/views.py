@@ -4,10 +4,11 @@ from .serializers import UserSerializer, ChatsSerializer, LoginSerializer
 from rest_framework import generics
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
-from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
+from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_201_CREATED
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.utils.decorators import method_decorator
 from rest_framework.decorators import api_view
+from django.contrib.auth.models import User
 # Create your views here.
 class ListUser(generics.ListCreateAPIView):
     queryset = models.User_Data.objects.all()
@@ -25,7 +26,11 @@ def Login(request):
         if user is None:
             return Response({'message': 'Invalid credentials'}, status=HTTP_400_BAD_REQUEST)
         return Response({'message': 'Login successful'}, status=HTTP_200_OK)
-    # serializer = LoginSerializer(data=request.data)
-    # if serializer.is_valid():
-    #     return Response(serializer.data, status=HTTP_200_OK)
-    # return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+def CreateAccount(request):
+    if request.method == 'POST':
+        user = User.objects.create_user(request.data['username'], request.data['email'], request.data['password'])
+        user.save()
+        return Response({'message': 'Account created successfully'}, status=HTTP_201_CREATED)
+    return Response({'message': 'Invalid request method'}, status=HTTP_400_BAD_REQUEST)

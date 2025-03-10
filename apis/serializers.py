@@ -21,17 +21,16 @@ class ChatsSerializer(serializers.ModelSerializer):
         )
         model = models.Chat_History
 
-class LoginSerializer(serializers.ModelSerializer):
-    class Meta:
-        fields = (
-            'email',
-            'password',
-            'username'
-        )
-        model = User
+# class CreateAccountSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         fields = (
+#             'username',
+#             'email',
+#             'password'
+#         )
+#         model = User
 
-    def validate(self, attrs):
-        user = authenticate(username=attrs['username'], password=attrs['password'])
-        if user is None:
-            raise serializers.ValidationError('Invalid credentials')
-        return attrs
+#     def create(self, validated_data):
+#         user = User.objects.create_user(**validated_data)
+#         user.save()
+#         return user
