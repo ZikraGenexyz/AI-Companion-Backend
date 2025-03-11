@@ -84,6 +84,8 @@ def AddChat(request):
     user = User.objects.get(username=request.data['user'])
 
     conversation_history = models.Chat_History.objects.filter(user=user)
+    conversation_history = ChatsSerializer(conversation_history, many=True).data
+    conversation_history = [item['text'] for item in conversation_history]
 
     if not text:
         return JsonResponse({'error': 'No text provided'}, status=400)
