@@ -41,3 +41,11 @@ def CreateAccount(request):
         user.save()
         return Response({'message': 'Account created successfully'}, status=HTTP_201_CREATED)
     return Response({'message': 'Invalid request method'}, status=HTTP_400_BAD_REQUEST)
+
+def AddChat(request):
+    if request.method == 'POST':
+        user = User.objects.get(username=request.data['user'])
+        chat = models.Chat_History.objects.create(text=request.data['text'], user=user, isUser=True)
+        chat.save()
+        return Response({'message': 'Chat added successfully'}, status=HTTP_201_CREATED)
+    return Response({'message': 'Invalid request method'}, status=HTTP_400_BAD_REQUEST)
