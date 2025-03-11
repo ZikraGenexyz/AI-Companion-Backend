@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from companion_app import models
-from .serializers import UserSerializer, ChatsSerializer
+from .serializers import ChatsSerializer
 from rest_framework import generics
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
@@ -10,10 +10,6 @@ from django.utils.decorators import method_decorator
 from rest_framework.decorators import api_view
 from django.contrib.auth.models import User
 # Create your views here.
-class ListUser(generics.ListCreateAPIView):
-    queryset = models.User_Data.objects.all()
-    serializer_class = UserSerializer
-
 class HistoryChat(generics.ListCreateAPIView):
     queryset = models.Chat_History.objects.all()
     serializer_class = ChatsSerializer
