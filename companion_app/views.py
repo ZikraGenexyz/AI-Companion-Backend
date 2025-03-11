@@ -39,6 +39,8 @@ def process_audio(request):
         use_cartesia = data.get('useCartesia')
         conversation_history = data.get('conversationHistory', [])
 
+        print(conversation_history)
+
         if not text:
             logger.error("No text provided in request")
             return JsonResponse({'error': 'No text provided'}, status=400)
