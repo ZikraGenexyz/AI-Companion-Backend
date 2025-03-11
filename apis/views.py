@@ -163,6 +163,9 @@ def AddChat(request):
 
     else:
         audio_base64 = None
+
+    models.Chat_History.objects.create(text=text, user=user, isUser=True)
+    models.Chat_History.objects.create(text=ai_response, user=user, isUser=False)
     
     return JsonResponse({
         'success': True,
