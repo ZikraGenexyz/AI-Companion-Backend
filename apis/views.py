@@ -61,11 +61,10 @@ def CreateAccount(request):
     # return Response({'message': 'Invalid request method'}, status=HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
-def AddChat(request):
+def ResetChat(request):
     user = User.objects.get(username=request.data['user'])
-    chat = models.Chat_History.objects.create(text=request.data['text'], user=user, isUser=True)
-    chat.save()
-    return Response({'message': 'Chat added successfully'}, status=HTTP_201_CREATED)
+    models.Chat_History.objects.filter(user=user).delete()
+    return Response({'message': 'Chat reset successfully'}, status=HTTP_200_OK)
     # return Response({'message': 'Invalid request method'}, status=HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
@@ -75,15 +74,13 @@ def GetChat(request):
     return JsonResponse({'chat': chat}, status=HTTP_200_OK)
 
 @api_view(['POST'])
-def ResetChat(request):
-    models.Chat_History.objects.filter(user=request.data['username']).delete()
-
+def AddChat(request):
     # Get the text from the request
     text = request.data['text']
     # use_cartesia = request.data['useCartesia']
     use_cartesia = False
 
-    user = User.objects.get(username=request.data['username'])
+    user = User.objects.get(username=request.data['user'])
 
     conversation_history = models.Chat_History.objects.filter(user=user)
 
