@@ -72,7 +72,7 @@ def AddChat(request):
 def GetChat(request):
     user = User.objects.get(username=request.data['user'])
     chat = models.Chat_History.objects.filter(user=user)
-    return JsonResponse(chat, status=HTTP_200_OK)
+    return JsonResponse({'chat': chat}, status=HTTP_200_OK)
 
 @api_view(['POST'])
 def ResetChat(request):
