@@ -5,6 +5,3 @@ class Chat_History(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     text = models.TextField(max_length=1000)
     isUser = models.BooleanField(default=False)
-
-    def __str__(self):
-        return self.text
