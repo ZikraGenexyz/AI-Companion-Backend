@@ -70,9 +70,9 @@ def ResetChat(request):
 @api_view(['POST'])
 def GetChat(request):
     user = User.objects.get(username=request.data['user'])
-    chat = models.Chat_History.objects.filter(user=user).to_json()
-    chat = json.loads(chat)
-    return JsonResponse(chat, status=HTTP_200_OK)
+    chat = models.Chat_History.objects.filter(user=user)
+    serializer = ChatsSerializer(chat, many=True)
+    return Response(serializer.data, status=HTTP_200_OK)
 
 @api_view(['POST'])
 def AddChat(request):
