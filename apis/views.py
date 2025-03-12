@@ -37,20 +37,26 @@ class HistoryChat(generics.ListCreateAPIView):
 def Login(request):
     auth_data = request.data
     if '@' in auth_data['username']:
-        user = User.objects.get(email=auth_data['username'])
+        try:
+            user = User.objects.get(email=auth_data['username'])
+        except User.DoesNotExist:
+            return Response({'message': 'Invalid credentials'}, status=HTTP_400_BAD_REQUEST)
             
         if user.check_password(auth_data['password']):
-            return Response({'message': 'Login successful'}, status=HTTP_200_OK)
+            return Response({'message': 'Login successful',
+                             'id': user.id}, status=HTTP_200_OK)
         else:
             return Response({'message': 'Invalid credentials'}, status=HTTP_400_BAD_REQUEST)
 
     else:
-        user = authenticate(username=auth_data['username'], password=auth_data['password'])
+        valid_user = authenticate(username=auth_data['username'], password=auth_data['password'])
+        user = User.objects.get(username=auth_data['username'])
 
-        if user is None:
+        if valid_user is None:
             return Response({'message': 'Invalid credentials'}, status=HTTP_400_BAD_REQUEST)
         else:
-            return Response({'message': 'Login successful'}, status=HTTP_200_OK)
+            return Response({'message': 'Login successful',
+                             'id': user.id}, status=HTTP_200_OK)
 
 @api_view(['POST'])
 def CreateAccount(request):
@@ -169,10 +175,6 @@ def AddChat(request):
     models.Chat_History.objects.create(text=ai_response, user=user, isUser=False)
     
     return JsonResponse({
-        'success': True,
         'response': ai_response,
         'audio': audio_base64
     }, status=HTTP_200_OK)
-
-    return Response({'message': 'Chat reset successfully'}, status=HTTP_200_OK)
-    # return Response({'message': 'Invalid request method'}, status=HTTP_400_BAD_REQUEST)
