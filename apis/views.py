@@ -44,7 +44,9 @@ def Login(request):
             
         if user.check_password(auth_data['password']):
             return Response({'message': 'Login successful',
-                             'id': user.id}, status=HTTP_200_OK)
+                             'id': user.id,
+                             'username': user.username,
+                             'email': user.email}, status=HTTP_200_OK)
         else:
             return Response({'message': 'Invalid credentials'}, status=HTTP_400_BAD_REQUEST)
 
@@ -56,26 +58,25 @@ def Login(request):
             return Response({'message': 'Invalid credentials'}, status=HTTP_400_BAD_REQUEST)
         else:
             return Response({'message': 'Login successful',
-                             'id': user.id}, status=HTTP_200_OK)
+                             'id': user.id,
+                             'username': user.username,
+                             'email': user.email}, status=HTTP_200_OK)
 
 @api_view(['POST'])
 def CreateAccount(request):
-    # if request.method == 'POST':
     user = User.objects.create_user(request.data['username'], request.data['email'], request.data['password'])
     user.save()
     return Response({'message': 'Account created successfully'}, status=HTTP_201_CREATED)
-    # return Response({'message': 'Invalid request method'}, status=HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 def ResetChat(request):
-    user = User.objects.get(username=request.data['user'])
+    user = User.objects.get(id=request.data['user'])
     models.Chat_History.objects.filter(user=user).delete()
     return Response({'message': 'Chat reset successfully'}, status=HTTP_200_OK)
-    # return Response({'message': 'Invalid request method'}, status=HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 def GetChat(request):
-    user = User.objects.get(username=request.data['user'])
+    user = User.objects.get(id=request.data['user'])
     chat = models.Chat_History.objects.filter(user=user)
     serializer = ChatsSerializer(chat, many=True)
     return Response(serializer.data, status=HTTP_200_OK)
@@ -87,7 +88,7 @@ def AddChat(request):
     # use_cartesia = request.data['useCartesia']
     use_cartesia = False
 
-    user = User.objects.get(username=request.data['user'])
+    user = User.objects.get(id=request.data['user'])
 
     conversation_history = models.Chat_History.objects.filter(user=user)
     conversation_history = [{'role': 'user' if item.isUser else 'assistant', 'content': item.text} for item in conversation_history]
