@@ -6,7 +6,7 @@ from django.contrib.auth import authenticate
 class ChatsSerializer(serializers.ModelSerializer):
     class Meta:
         fields = (
-            'user',
+            'user_uid',
             'text',
             'isUser'
         )
