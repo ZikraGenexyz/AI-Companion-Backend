@@ -49,14 +49,12 @@ def CheckUser(request):
 
 @api_view(['POST'])
 def ResetChat(request):
-    user = User.objects.get(email=request.data['user'])
-    models.Chat_History.objects.filter(user=user).delete()
+    models.Chat_History.objects.filter(user_uid=request.data['user_uid']).delete()
     return Response({'message': 'Chat reset successfully'}, status=HTTP_200_OK)
 
 @api_view(['POST'])
 def GetChat(request):
-    user = User.objects.get(email=request.data['user'])
-    chat = models.Chat_History.objects.filter(user=user)
+    chat = models.Chat_History.objects.filter(user_uid=request.data['user_uid'])
     serializer = ChatsSerializer(chat, many=True)
     return Response(serializer.data, status=HTTP_200_OK)
 
@@ -67,9 +65,7 @@ def AddChat(request):
     # use_cartesia = request.data['useCartesia']
     use_cartesia = False
 
-    user = User.objects.get(email=request.data['user'])
-
-    conversation_history = models.Chat_History.objects.filter(user=user)
+    conversation_history = models.Chat_History.objects.filter(user_uid=request.data['user_uid'])
     conversation_history = [{'role': 'user' if item.isUser else 'assistant', 'content': item.text} for item in conversation_history]
 
     if not text:
@@ -151,8 +147,8 @@ def AddChat(request):
     else:
         audio_base64 = None
 
-    models.Chat_History.objects.create(text=text, user=user, isUser=True)
-    models.Chat_History.objects.create(text=ai_response, user=user, isUser=False)
+    models.Chat_History.objects.create(text=text, user_uid=request.data['user_uid'], isUser=True)
+    models.Chat_History.objects.create(text=ai_response, user_uid=request.data['user_uid'], isUser=False)
     
     return JsonResponse({
         'response': ai_response,
