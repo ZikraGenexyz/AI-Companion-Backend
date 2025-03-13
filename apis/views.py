@@ -34,35 +34,6 @@ class HistoryChat(generics.ListCreateAPIView):
     serializer_class = ChatsSerializer
 
 @api_view(['POST'])
-def Login(request):
-    auth_data = request.data
-    if '@' in auth_data['username']:
-        try:
-            user = User.objects.get(email=auth_data['username'])
-        except User.DoesNotExist:
-            return Response({'message': 'Invalid credentials'}, status=HTTP_400_BAD_REQUEST)
-            
-        if user.check_password(auth_data['password']):
-            return Response({'message': 'Login successful',
-                             'id': user.id,
-                             'username': user.username,
-                             'email': user.email}, status=HTTP_200_OK)
-        else:
-            return Response({'message': 'Invalid credentials'}, status=HTTP_400_BAD_REQUEST)
-
-    else:
-        valid_user = authenticate(username=auth_data['username'], password=auth_data['password'])
-        user = User.objects.get(username=auth_data['username'])
-
-        if valid_user is None:
-            return Response({'message': 'Invalid credentials'}, status=HTTP_400_BAD_REQUEST)
-        else:
-            return Response({'message': 'Login successful',
-                             'id': user.id,
-                             'username': user.username,
-                             'email': user.email}, status=HTTP_200_OK)
-
-@api_view(['POST'])
 def CreateAccount(request):
     user = User.objects.create_user(request.data['username'], request.data['email'], request.data['password'])
     user.save()
@@ -70,13 +41,13 @@ def CreateAccount(request):
 
 @api_view(['POST'])
 def ResetChat(request):
-    user = User.objects.get(id=request.data['user'])
+    user = User.objects.get(email=request.data['user'])
     models.Chat_History.objects.filter(user=user).delete()
     return Response({'message': 'Chat reset successfully'}, status=HTTP_200_OK)
 
 @api_view(['POST'])
 def GetChat(request):
-    user = User.objects.get(id=request.data['user'])
+    user = User.objects.get(email=request.data['user'])
     chat = models.Chat_History.objects.filter(user=user)
     serializer = ChatsSerializer(chat, many=True)
     return Response(serializer.data, status=HTTP_200_OK)
@@ -88,7 +59,7 @@ def AddChat(request):
     # use_cartesia = request.data['useCartesia']
     use_cartesia = False
 
-    user = User.objects.get(id=request.data['user'])
+    user = User.objects.get(email=request.data['user'])
 
     conversation_history = models.Chat_History.objects.filter(user=user)
     conversation_history = [{'role': 'user' if item.isUser else 'assistant', 'content': item.text} for item in conversation_history]
