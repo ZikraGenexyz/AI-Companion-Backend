@@ -40,6 +40,14 @@ def CreateAccount(request):
     return Response({'message': 'Account created successfully'}, status=HTTP_201_CREATED)
 
 @api_view(['POST'])
+def CheckUser(request):
+    user = User.objects.filter(email=request.data['email']).exists()
+    if not user:
+        CreateAccount(request)
+    else:
+        return Response({'message': 'User already exists'}, status=HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
 def ResetChat(request):
     user = User.objects.get(email=request.data['user'])
     models.Chat_History.objects.filter(user=user).delete()
