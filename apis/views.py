@@ -63,7 +63,7 @@ def AddChat(request):
     # Get the text from the request
     text = request.data['text']
     # use_cartesia = request.data['useCartesia']
-    use_cartesia = False
+    use_cartesia = True
 
     conversation_history = models.Chat_History.objects.filter(user_uid=request.data['user_uid'])
     conversation_history = [{'role': 'user' if item.isUser else 'assistant', 'content': item.text} for item in conversation_history]
@@ -117,33 +117,36 @@ def AddChat(request):
     ai_response = ai_response.split("</think>")[-1]
 
     if use_cartesia:
-        # Convert AI response to speech using Cartesia
-        logger.debug("Converting response to speech with Cartesia")
-        output_format = {
-            "container": "mp3",
-            "encoding": "mp3",
-            "sample_rate": 44100,
-            "bit_rate": 128000
-        }
+        try:
+            # Convert AI response to speech using Cartesia
+            logger.debug("Converting response to speech with Cartesia")
+            output_format = {
+                "container": "mp3",
+                "encoding": "mp3",
+                "sample_rate": 44100,
+                "bit_rate": 128000
+            }
 
-        # Add natural pauses with punctuation
-        speech_response = ai_response
-        speech_response = speech_response.replace('!', '! ')
-        speech_response = speech_response.replace('?', '? ')
-        speech_response = speech_response.replace('.', '. ')
-        speech_response = ' '.join(speech_response.split('*')[::2])
-    
-        # Generate speech using Cartesia with cheerful voice
-        audio_data = cartesia_client.tts.bytes(
-            model_id="sonic-english",
-            transcript=speech_response,
-            voice_id="694f9389-aac1-45b6-b726-9d9369183238",
-            output_format=output_format
-        )
+            # Add natural pauses with punctuation
+            speech_response = ai_response
+            speech_response = speech_response.replace('!', '! ')
+            speech_response = speech_response.replace('?', '? ')
+            speech_response = speech_response.replace('.', '. ')
+            speech_response = ' '.join(speech_response.split('*')[::2])
+        
+            # Generate speech using Cartesia with cheerful voice
+            audio_data = cartesia_client.tts.bytes(
+                model_id="sonic-english",
+                transcript=speech_response,
+                voice_id="694f9389-aac1-45b6-b726-9d9369183238",
+                output_format=output_format
+            )
     
         # Convert audio data directly to base64 without saving to file
-        audio_base64 = base64.b64encode(audio_data).decode('utf-8')
-
+            audio_base64 = base64.b64encode(audio_data).decode('utf-8')
+        except Exception as e:
+            logger.error(f"Error converting response to speech: {e}")
+            audio_base64 = None
     else:
         audio_base64 = None
 
