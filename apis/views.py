@@ -136,7 +136,7 @@ def AddChat(request):
         
             # Generate speech using Cartesia with cheerful voice
             audio_data = cartesia_client.tts.bytes(
-                model_id="sonic-english",
+                model_id="sonic-turbo",
                 transcript=speech_response,
                 voice_id="694f9389-aac1-45b6-b726-9d9369183238",
                 output_format=output_format
