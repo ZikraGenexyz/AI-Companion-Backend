@@ -24,12 +24,9 @@ groq_client = groq.Groq(api_key=os.getenv('GROQ_API_KEY'))
 # Initialize Cartesia client
 cartesia_client = Cartesia(api_key=os.getenv('CARTESIA_API_KEY'))
 
-def stream_audio_chunks():
+def stream_audio_chunks(ws, speech_response):
     """Generator function to stream audio chunks"""
     try:
-        # Initialize a new WebSocket connection for this request
-        ws = cartesia_client.tts.websocket()
-        
         # Send metadata first
         metadata = {
             'type': 'metadata',
@@ -41,7 +38,21 @@ def stream_audio_chunks():
             }
         }
         yield json.dumps(metadata) + '\n'
+
+        # Send the TTS request
+        ws.send({
+            "model_id": "sonic-turbo",
+            "transcript": speech_response,
+            "voice_id": "694f9389-aac1-45b6-b726-9d9369183238",
+            "output_format": {
+                "container": "mp3",
+                "encoding": "mp3",
+                "sample_rate": 44100,
+                "bit_rate": 128000
+            }
+        })
         
+        # Stream the response chunks
         for chunk in ws.receive():
             if chunk.type == "audio":
                 # Send each audio chunk as base64 encoded data
@@ -62,7 +73,10 @@ def stream_audio_chunks():
         }
         yield json.dumps(error_data) + '\n'
     finally:
-        ws.close()
+        try:
+            ws.close()
+        except:
+            pass
 
 # Create your views here.
 def myapp(request):
@@ -71,6 +85,7 @@ def myapp(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def process_audio(request):
+    ws = None
     try:
         logger.debug("Starting text processing")
         # Get the text from the request
@@ -138,23 +153,13 @@ def process_audio(request):
                     speech_response = speech_response.replace('.', '. ')
                     speech_response = ' '.join(speech_response.split('*')[::2])
 
-                    # Initialize WebSocket and prepare request
+                    # Initialize WebSocket connection
                     ws = cartesia_client.tts.websocket()
-                    ws.send({
-                        "model_id": "sonic-turbo",
-                        "transcript": speech_response,
-                        "voice_id": "694f9389-aac1-45b6-b726-9d9369183238",
-                        "output_format": {
-                            "container": "mp3",
-                            "encoding": "mp3",
-                            "sample_rate": 44100,
-                            "bit_rate": 128000
-                        }
-                    })
+                    logger.debug("WebSocket connection established")
 
                     # Return streaming response
                     response = StreamingHttpResponse(
-                        stream_audio_chunks(),
+                        stream_audio_chunks(ws, speech_response),
                         content_type='text/event-stream'
                     )
                     response['Cache-Control'] = 'no-cache'
@@ -163,6 +168,11 @@ def process_audio(request):
 
                 except Exception as e:
                     logger.error(f"Error converting response to speech: {e}")
+                    if ws:
+                        try:
+                            ws.close()
+                        except:
+                            pass
                     return JsonResponse({
                         'response': ai_response,
                         'error': str(e)
@@ -177,6 +187,11 @@ def process_audio(request):
         except Exception as e:
             logger.error(f"Error processing text: {str(e)}")
             logger.error(traceback.format_exc())
+            if ws:
+                try:
+                    ws.close()
+                except:
+                    pass
             return JsonResponse({
                 'error': f'Error processing text: {str(e)}'
             }, status=500)
@@ -184,6 +199,11 @@ def process_audio(request):
     except Exception as e:
         logger.error(f"Unexpected error: {str(e)}")
         logger.error(traceback.format_exc())
+        if ws:
+            try:
+                ws.close()
+            except:
+                pass
         return JsonResponse({
             'error': f'An error occurred: {str(e)}'
         }, status=500)
