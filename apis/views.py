@@ -9,12 +9,12 @@ from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.utils.decorators import method_decorator
 from rest_framework.decorators import api_view
 from django.contrib.auth.models import User
-from django.http import StreamingHttpResponse, JsonResponse
 import logging
 import json
 import base64
 import os
 from dotenv import load_dotenv
+from django.http import JsonResponse
 from cartesia import Cartesia
 import groq
 
@@ -29,16 +29,9 @@ groq_client = groq.Groq(api_key=os.getenv('GROQ_API_KEY'))
 # Initialize Cartesia client
 cartesia_client = Cartesia(api_key=os.getenv('CARTESIA_API_KEY'))
 
-ws = cartesia_client.tts.websocket()
-
 class HistoryChat(generics.ListCreateAPIView):
     queryset = models.Chat_History.objects.all()
     serializer_class = ChatsSerializer
-
-@api_view(['GET'])
-def GetDeepgramAPI(request):
-    api_key = os.getenv('DEEPGRAM_API_KEY')
-    return Response({'api_key': api_key}, status=HTTP_200_OK)
 
 @api_view(['POST'])
 def CreateAccount(request):
@@ -65,50 +58,11 @@ def GetChat(request):
     serializer = ChatsSerializer(chat, many=True)
     return Response(serializer.data, status=HTTP_200_OK)
 
-def stream_audio_chunks():
-    """Generator function to stream audio chunks"""
-    try:
-        # Initialize a new WebSocket connection for this request
-        ws = cartesia_client.tts.websocket()
-        
-        # Send metadata first
-        metadata = {
-            'type': 'metadata',
-            'format': {
-                'container': 'mp3',
-                'encoding': 'mp3',
-                'sample_rate': 44100,
-                'bit_rate': 128000
-            }
-        }
-        yield json.dumps(metadata) + '\n'
-        
-        for chunk in ws.receive():
-            if chunk.type == "audio":
-                # Send each audio chunk as base64 encoded data
-                chunk_data = {
-                    'type': 'audio',
-                    'data': base64.b64encode(chunk.data).decode('utf-8')
-                }
-                yield json.dumps(chunk_data) + '\n'
-            elif chunk.type == "end":
-                # Send end marker
-                yield json.dumps({'type': 'end'}) + '\n'
-                break
-    except Exception as e:
-        # Send error information
-        error_data = {
-            'type': 'error',
-            'message': str(e)
-        }
-        yield json.dumps(error_data) + '\n'
-    finally:
-        ws.close()
-
 @api_view(['POST'])
 def AddChat(request):
     # Get the text from the request
     text = request.data['text']
+    # use_cartesia = request.data['useCartesia']
     use_cartesia = True
 
     conversation_history = models.Chat_History.objects.filter(user_uid=request.data['user_uid'])
@@ -131,7 +85,7 @@ def AddChat(request):
             - Always maintain a positive and encouraging attitude
             - Reference previous parts of the conversation when relevant
             - Maintain context from earlier exchanges
-            - respond with a short response
+            - respond with a shorter response
             
             Example responses:
             "Hey there! I'd love to help you with that!"
@@ -141,73 +95,65 @@ def AddChat(request):
         }
     ]
 
-    # Add conversation history and current message
+    # Add conversation history
     messages.extend(conversation_history)
-    messages.append({"role": "user", "content": text})
+    
+    # Add current user message
+    messages.append({
+        "role": "user",
+        "content": text
+    })
 
-    try:
-        # Generate AI response using Groq
-        logger.debug("Generating AI response with Groq")
-        chat_completion = groq_client.chat.completions.create(
-            messages=messages,
-            model="llama-3.2-3b-preview",
-            temperature=0.7,
-            max_tokens=1000,
-        )
-            
-        ai_response = chat_completion.choices[0].message.content
-        ai_response = ai_response.split("</think>")[-1]
+    # Generate AI response using Groq
+    logger.debug("Generating AI response with Groq")
+    chat_completion = groq_client.chat.completions.create(
+        messages=messages,
+        model="llama-3.2-3b-preview",
+        temperature=0.7,
+        max_tokens=1000,
+    )
+        
+    ai_response = chat_completion.choices[0].message.content
+    ai_response = ai_response.split("</think>")[-1]
 
-        # Store chat history
-        models.Chat_History.objects.create(text=text, user_uid=request.data['user_uid'], isUser=True)
-        models.Chat_History.objects.create(text=ai_response, user_uid=request.data['user_uid'], isUser=False)
+    if use_cartesia:
+        try:
+            # Convert AI response to speech using Cartesia
+            logger.debug("Converting response to speech with Cartesia")
+            output_format = {
+                "container": "mp3",
+                "encoding": "mp3",
+                "sample_rate": 44100,
+                "bit_rate": 128000
+            }
 
-        if use_cartesia:
-            try:
-                # Add natural pauses with punctuation
-                speech_response = ai_response
-                speech_response = speech_response.replace('!', '! ')
-                speech_response = speech_response.replace('?', '? ')
-                speech_response = speech_response.replace('.', '. ')
-                speech_response = ' '.join(speech_response.split('*')[::2])
+            # Add natural pauses with punctuation
+            speech_response = ai_response
+            speech_response = speech_response.replace('!', '! ')
+            speech_response = speech_response.replace('?', '? ')
+            speech_response = speech_response.replace('.', '. ')
+            speech_response = ' '.join(speech_response.split('*')[::2])
+        
+            # Generate speech using Cartesia with cheerful voice
+            audio_data = cartesia_client.tts.bytes(
+                model_id="sonic-turbo",
+                transcript=speech_response,
+                voice_id="694f9389-aac1-45b6-b726-9d9369183238",
+                output_format=output_format
+            )
+    
+        # Convert audio data directly to base64 without saving to file
+            audio_base64 = base64.b64encode(audio_data).decode('utf-8')
+        except Exception as e:
+            logger.error(f"Error converting response to speech: {e}")
+            audio_base64 = None
+    else:
+        audio_base64 = None
 
-                # Initialize WebSocket and prepare request
-                ws = cartesia_client.tts.websocket()
-                ws.send({
-                    "model_id": "sonic-turbo",
-                    "transcript": speech_response,
-                    "voice_id": "694f9389-aac1-45b6-b726-9d9369183238",
-                    "output_format": {
-                        "container": "mp3",
-                        "encoding": "mp3",
-                        "sample_rate": 44100,
-                        "bit_rate": 128000
-                    }
-                })
-
-                # Return streaming response
-                response = StreamingHttpResponse(
-                    stream_audio_chunks(),
-                    content_type='text/event-stream'
-                )
-                response['Cache-Control'] = 'no-cache'
-                response['X-Accel-Buffering'] = 'no'
-                return response
-
-            except Exception as e:
-                logger.error(f"Error converting response to speech: {e}")
-                return JsonResponse({
-                    'response': ai_response,
-                    'error': str(e)
-                }, status=500)
-        else:
-            return JsonResponse({
-                'response': ai_response,
-                'audio': None
-            }, status=HTTP_200_OK)
-
-    except Exception as e:
-        logger.error(f"Error in AddChat: {e}")
-        return JsonResponse({
-            'error': str(e)
-        }, status=500)
+    models.Chat_History.objects.create(text=text, user_uid=request.data['user_uid'], isUser=True)
+    models.Chat_History.objects.create(text=ai_response, user_uid=request.data['user_uid'], isUser=False)
+    
+    return JsonResponse({
+        'response': ai_response,
+        'audio': audio_base64
+    }, status=HTTP_200_OK)

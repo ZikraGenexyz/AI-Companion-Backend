@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import JsonResponse, StreamingHttpResponse
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 import json
@@ -24,60 +24,6 @@ groq_client = groq.Groq(api_key=os.getenv('GROQ_API_KEY'))
 # Initialize Cartesia client
 cartesia_client = Cartesia(api_key=os.getenv('CARTESIA_API_KEY'))
 
-def stream_audio_chunks(ws, speech_response):
-    """Generator function to stream audio chunks"""
-    try:
-        # Send metadata first
-        metadata = {
-            'type': 'metadata',
-            'format': {
-                'container': 'mp3',
-                'encoding': 'mp3',
-                'sample_rate': 44100,
-                'bit_rate': 128000
-            }
-        }
-        yield json.dumps(metadata) + '\n'
-
-        # Send the TTS request
-        ws.send({
-            "model_id": "sonic-turbo",
-            "transcript": speech_response,
-            "voice_id": "694f9389-aac1-45b6-b726-9d9369183238",
-            "output_format": {
-                "container": "mp3",
-                "encoding": "mp3",
-                "sample_rate": 44100,
-                "bit_rate": 128000
-            }
-        })
-        
-        # Stream the response chunks
-        for chunk in ws.receive():
-            if chunk.type == "audio":
-                # Send each audio chunk as base64 encoded data
-                chunk_data = {
-                    'type': 'audio',
-                    'data': base64.b64encode(chunk.data).decode('utf-8')
-                }
-                yield json.dumps(chunk_data) + '\n'
-            elif chunk.type == "end":
-                # Send end marker
-                yield json.dumps({'type': 'end'}) + '\n'
-                break
-    except Exception as e:
-        # Send error information
-        error_data = {
-            'type': 'error',
-            'message': str(e)
-        }
-        yield json.dumps(error_data) + '\n'
-    finally:
-        try:
-            ws.close()
-        except:
-            pass
-
 # Create your views here.
 def myapp(request):
     return render(request, 'index.html')
@@ -85,7 +31,6 @@ def myapp(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def process_audio(request):
-    ws = None
     try:
         logger.debug("Starting text processing")
         # Get the text from the request
@@ -93,6 +38,8 @@ def process_audio(request):
         text = data.get('text')
         use_cartesia = data.get('useCartesia')
         conversation_history = data.get('conversationHistory', [])
+
+        print(conversation_history)
 
         if not text:
             logger.error("No text provided in request")
@@ -145,53 +92,48 @@ def process_audio(request):
             ai_response = ai_response.split("</think>")[-1]
 
             if use_cartesia:
-                try:
-                    # Add natural pauses with punctuation
-                    speech_response = ai_response
-                    speech_response = speech_response.replace('!', '! ')
-                    speech_response = speech_response.replace('?', '? ')
-                    speech_response = speech_response.replace('.', '. ')
-                    speech_response = ' '.join(speech_response.split('*')[::2])
+                # Convert AI response to speech using Cartesia
+                logger.debug("Converting response to speech with Cartesia")
+                output_format = {
+                    "container": "mp3",
+                    "encoding": "mp3",
+                    "sample_rate": 44100,
+                    "bit_rate": 128000
+                }
 
-                    # Initialize WebSocket connection
-                    ws = cartesia_client.tts.websocket()
-                    logger.debug("WebSocket connection established")
+                # Add natural pauses with punctuation
+                speech_response = ai_response
+                speech_response = speech_response.replace('!', '! ')
+                speech_response = speech_response.replace('?', '? ')
+                speech_response = speech_response.replace('.', '. ')
+                speech_response = ' '.join(speech_response.split('*')[::2])
+            
+                # Generate speech using Cartesia with cheerful voice
+                audio_data = cartesia_client.tts.bytes(
+                    model_id="sonic-english",
+                    transcript=speech_response,
+                    voice_id="694f9389-aac1-45b6-b726-9d9369183238",
+                    output_format=output_format
+                )
+            
+                # Convert audio data directly to base64 without saving to file
+                audio_base64 = base64.b64encode(audio_data).decode('utf-8')
 
-                    # Return streaming response
-                    response = StreamingHttpResponse(
-                        stream_audio_chunks(ws, speech_response),
-                        content_type='text/event-stream'
-                    )
-                    response['Cache-Control'] = 'no-cache'
-                    response['X-Accel-Buffering'] = 'no'
-                    return response
-
-                except Exception as e:
-                    logger.error(f"Error converting response to speech: {e}")
-                    if ws:
-                        try:
-                            ws.close()
-                        except:
-                            pass
-                    return JsonResponse({
-                        'response': ai_response,
-                        'error': str(e)
-                    }, status=500)
             else:
-                return JsonResponse({
-                    'success': True,
-                    'response': ai_response,
-                    'audio': None
-                })
+
+                audio_base64 = None
+            
+            logger.debug("Processing completed successfully")
+            
+            return JsonResponse({
+                'success': True,
+                'response': ai_response,
+                'audio': audio_base64
+            })
             
         except Exception as e:
             logger.error(f"Error processing text: {str(e)}")
             logger.error(traceback.format_exc())
-            if ws:
-                try:
-                    ws.close()
-                except:
-                    pass
             return JsonResponse({
                 'error': f'Error processing text: {str(e)}'
             }, status=500)
@@ -199,11 +141,6 @@ def process_audio(request):
     except Exception as e:
         logger.error(f"Unexpected error: {str(e)}")
         logger.error(traceback.format_exc())
-        if ws:
-            try:
-                ws.close()
-            except:
-                pass
         return JsonResponse({
             'error': f'An error occurred: {str(e)}'
         }, status=500)
