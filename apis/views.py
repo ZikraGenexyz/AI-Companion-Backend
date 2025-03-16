@@ -33,6 +33,11 @@ class HistoryChat(generics.ListCreateAPIView):
     queryset = models.Chat_History.objects.all()
     serializer_class = ChatsSerializer
 
+@api_view(['GET'])
+def GetDeepgramAPI(request):
+    api_key = os.getenv('DEEPGRAM_API_KEY')
+    return Response({'api_key': api_key}, status=HTTP_200_OK)
+
 @api_view(['POST'])
 def CreateAccount(request):
     user = User.objects.create_user(request.data['username'], request.data['email'], request.data['password'])
