@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import HistoryChat, CreateAccount, CheckUser, AddChat, GetChat, ResetChat
+from .views import HistoryChat, CreateAccount, CheckUser, AddChat, GetChat, ResetChat, GetDeepgramAPI
 
 urlpatterns = [
     path('/chats', HistoryChat.as_view()),
@@ -8,4 +8,5 @@ urlpatterns = [
     path('/add-chat', AddChat, name='add-chat'),
     path('/get-chat', GetChat, name='get-chat'),
     path('/reset-chat', ResetChat, name='reset-chat'),
+    path('/get-deepgram-api', GetDeepgramAPI, name='get-deepgram-api'),
 ]
