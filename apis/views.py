@@ -67,7 +67,11 @@ def GetChat(request):
 def AddChat(request):
     # Get the text from the request
     text = request.data['text']
-    use_cartesia = request.data['useCartesia']
+    
+    if request.data['useCartesia'] == 'true':
+        use_cartesia = True
+    else:
+        use_cartesia = False
 
     conversation_history = models.Chat_History.objects.filter(user_uid=request.data['user_uid'])
     conversation_history = [{'role': 'user' if item.isUser else 'assistant', 'content': item.text} for item in conversation_history]
