@@ -67,7 +67,7 @@ def GetChat(request):
 def AddChat(request):
     text = request.data['text']
     user_uid = request.data['user_uid']
-    isUser = request.data['isUser']
+    isUser = bool(request.data['isUser'])
 
     models.Chat_History.objects.create(text=text, user_uid=user_uid, isUser=isUser)
     
