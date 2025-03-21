@@ -71,9 +71,12 @@ def AddChat(request):
 
     chat_history = models.Chat_History.objects.filter(user_uid=user_uid).last()
 
-    if chat_history.isUser == isUser:
-        chat_history.text = text
-        chat_history.save()
+    if chat_history is not None:
+        if chat_history.isUser == isUser:
+            chat_history.text = text
+            chat_history.save()
+        else:
+            models.Chat_History.objects.create(text=text, user_uid=user_uid, isUser=isUser)
     else:
         models.Chat_History.objects.create(text=text, user_uid=user_uid, isUser=isUser)
     
