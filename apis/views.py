@@ -69,6 +69,12 @@ def AddChat(request):
     user_uid = request.data['user_uid']
     isUser = bool(request.data['isUser'])
 
-    models.Chat_History.objects.create(text=text, user_uid=user_uid, isUser=isUser)
+    chat_history = models.Chat_History.objects.filter(user_uid=user_uid).last()
+
+    if chat_history.isUser == isUser:
+        chat_history.text = text
+        chat_history.save()
+    else:
+        models.Chat_History.objects.create(text=text, user_uid=user_uid, isUser=isUser)
     
     return Response({'message': 'Chat added successfully'}, status=HTTP_200_OK)
