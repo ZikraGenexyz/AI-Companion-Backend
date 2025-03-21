@@ -63,105 +63,115 @@ def GetChat(request):
     serializer = ChatsSerializer(chat, many=True)
     return Response(serializer.data, status=HTTP_200_OK)
 
-@api_view(['POST'])
-def AddChat(request):
-    # Get the text from the request
-    text = request.data['text']
+# @api_view(['POST'])
+# def AddChat(request):
+#     # Get the text from the request
+#     text = request.data['text']
     
-    if request.data['useCartesia'] == 'true':
-        use_cartesia = True
-    else:
-        use_cartesia = False
+#     if request.data['useCartesia'] == 'true':
+#         use_cartesia = True
+#     else:
+#         use_cartesia = False
 
-    conversation_history = models.Chat_History.objects.filter(user_uid=request.data['user_uid'])
-    conversation_history = [{'role': 'user' if item.isUser else 'assistant', 'content': item.text} for item in conversation_history]
+#     conversation_history = models.Chat_History.objects.filter(user_uid=request.data['user_uid'])
+#     conversation_history = [{'role': 'user' if item.isUser else 'assistant', 'content': item.text} for item in conversation_history]
 
-    if not text:
-        return JsonResponse({'error': 'No text provided'}, status=400)
+#     if not text:
+#         return JsonResponse({'error': 'No text provided'}, status=400)
     
-    # Prepare messages for Groq
-    messages = [
-        {
-            "role": "system",
-            "content": """You are a Robot, a friendly and enthusiastic robot companion with a playful personality. 
-            You love helping people. Your responses should be:
-            - Warm and friendly
-            - Keep responses concise but engaging
-            - Show genuine interest in the user
-            - Use a casual, conversational tone
-            - Sometimes add playful remarks or gentle humor
-            - Always maintain a positive and encouraging attitude
-            - Reference previous parts of the conversation when relevant
-            - Maintain context from earlier exchanges
-            - respond with a shorter response
+#     # Prepare messages for Groq
+#     messages = [
+#         {
+#             "role": "system",
+#             "content": """You are a Robot, a friendly and enthusiastic robot companion with a playful personality. 
+#             You love helping people. Your responses should be:
+#             - Warm and friendly
+#             - Keep responses concise but engaging
+#             - Show genuine interest in the user
+#             - Use a casual, conversational tone
+#             - Sometimes add playful remarks or gentle humor
+#             - Always maintain a positive and encouraging attitude
+#             - Reference previous parts of the conversation when relevant
+#             - Maintain context from earlier exchanges
+#             - respond with a shorter response
             
-            Example responses:
-            "Hey there! I'd love to help you with that!"
-            "That's a great question! Let me think about it..."
-            "Awesome! I'm excited to help you with this!"
-            """
-        }
-    ]
+#             Example responses:
+#             "Hey there! I'd love to help you with that!"
+#             "That's a great question! Let me think about it..."
+#             "Awesome! I'm excited to help you with this!"
+#             """
+#         }
+#     ]
 
-    # Add conversation history
-    messages.extend(conversation_history)
+#     # Add conversation history
+#     messages.extend(conversation_history)
     
-    # Add current user message
-    messages.append({
-        "role": "user",
-        "content": text
-    })
+#     # Add current user message
+#     messages.append({
+#         "role": "user",
+#         "content": text
+#     })
 
-    # Generate AI response using Groq
-    logger.debug("Generating AI response with Groq")
-    chat_completion = groq_client.chat.completions.create(
-        messages=messages,
-        model="llama-3.2-3b-preview",
-        temperature=0.7,
-        max_tokens=1000,
-    )
+#     # Generate AI response using Groq
+#     logger.debug("Generating AI response with Groq")
+#     chat_completion = groq_client.chat.completions.create(
+#         messages=messages,
+#         model="llama-3.2-3b-preview",
+#         temperature=0.7,
+#         max_tokens=1000,
+#     )
         
-    ai_response = chat_completion.choices[0].message.content
-    ai_response = ai_response.split("</think>")[-1]
+#     ai_response = chat_completion.choices[0].message.content
+#     ai_response = ai_response.split("</think>")[-1]
 
-    if use_cartesia:
-        try:
-            # Convert AI response to speech using Cartesia
-            logger.debug("Converting response to speech with Cartesia")
-            output_format = {
-                "container": "mp3",
-                "encoding": "mp3",
-                "sample_rate": 44100,
-                "bit_rate": 128000
-            }
+#     if use_cartesia:
+#         try:
+#             # Convert AI response to speech using Cartesia
+#             logger.debug("Converting response to speech with Cartesia")
+#             output_format = {
+#                 "container": "mp3",
+#                 "encoding": "mp3",
+#                 "sample_rate": 44100,
+#                 "bit_rate": 128000
+#             }
 
-            # Add natural pauses with punctuation
-            speech_response = ai_response
-            speech_response = speech_response.replace('!', '! ')
-            speech_response = speech_response.replace('?', '? ')
-            speech_response = speech_response.replace('.', '. ')
-            speech_response = ' '.join(speech_response.split('*')[::2])
+#             # Add natural pauses with punctuation
+#             speech_response = ai_response
+#             speech_response = speech_response.replace('!', '! ')
+#             speech_response = speech_response.replace('?', '? ')
+#             speech_response = speech_response.replace('.', '. ')
+#             speech_response = ' '.join(speech_response.split('*')[::2])
         
-            # Generate speech using Cartesia with cheerful voice
-            audio_data = cartesia_client.tts.bytes(
-                model_id="sonic-turbo",
-                transcript=speech_response,
-                voice_id="694f9389-aac1-45b6-b726-9d9369183238",
-                output_format=output_format
-            )
+#             # Generate speech using Cartesia with cheerful voice
+#             audio_data = cartesia_client.tts.bytes(
+#                 model_id="sonic-turbo",
+#                 transcript=speech_response,
+#                 voice_id="694f9389-aac1-45b6-b726-9d9369183238",
+#                 output_format=output_format
+#             )
     
-        # Convert audio data directly to base64 without saving to file
-            audio_base64 = base64.b64encode(audio_data).decode('utf-8')
-        except Exception as e:
-            logger.error(f"Error converting response to speech: {e}")
-            audio_base64 = None
-    else:
-        audio_base64 = None
+#         # Convert audio data directly to base64 without saving to file
+#             audio_base64 = base64.b64encode(audio_data).decode('utf-8')
+#         except Exception as e:
+#             logger.error(f"Error converting response to speech: {e}")
+#             audio_base64 = None
+#     else:
+#         audio_base64 = None
 
-    models.Chat_History.objects.create(text=text, user_uid=request.data['user_uid'], isUser=True)
-    models.Chat_History.objects.create(text=ai_response, user_uid=request.data['user_uid'], isUser=False)
+#     models.Chat_History.objects.create(text=text, user_uid=request.data['user_uid'], isUser=True)
+#     models.Chat_History.objects.create(text=ai_response, user_uid=request.data['user_uid'], isUser=False)
     
-    return JsonResponse({
-        'response': ai_response,
-        'audio': audio_base64
-    }, status=HTTP_200_OK)
+#     return JsonResponse({
+#         'response': ai_response,
+#         'audio': audio_base64
+#     }, status=HTTP_200_OK)
+
+@api_view(['PUT'])
+def addChat(request):
+    text = request.data['text']
+    user_uid = request.data['user_uid']
+    isUser = request.data['isUser']
+
+    models.Chat_History.objects.create(text=text, user_uid=user_uid, isUser=isUser)
+    
+    return Response({'message': 'Chat added successfully'}, status=HTTP_200_OK)
