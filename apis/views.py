@@ -59,9 +59,11 @@ def ResetChat(request):
 
 @api_view(['POST'])
 def GetChat(request):
-    chat = models.Chat_History.objects.filter(user_uid=request.data['user_uid'])
-    serializer = ChatsSerializer(chat, many=True)
-    return Response(serializer.data, status=HTTP_200_OK)
+    chat = models.Chat_History.objects.filter(user_uid=request.data['user_uid'], isUser=True)
+    summary = ''
+    for c in chat:
+        summary += c.text + ', '
+    return Response({'summary': summary}, status=HTTP_200_OK)
 
 @api_view(['PUT'])
 def AddChat(request):
