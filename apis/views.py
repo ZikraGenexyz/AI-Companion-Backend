@@ -63,6 +63,7 @@ def GetChat(request):
     summary = ''
     for c in chat:
         summary += c.text + ', '
+    summary = summary.rstrip(', ')
     return Response({'summary': summary}, status=HTTP_200_OK)
 
 @api_view(['PUT'])
