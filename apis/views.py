@@ -17,8 +17,7 @@ from dotenv import load_dotenv
 from django.http import JsonResponse
 from cartesia import Cartesia
 import groq
-
-logger = logging.getLogger(__name__)
+from serpapi import GoogleSearch
 
 # Load environment variables
 load_dotenv()
@@ -32,25 +31,6 @@ cartesia_client = Cartesia(api_key=os.getenv('CARTESIA_API_KEY'))
 class HistoryChat(generics.ListCreateAPIView):
     queryset = models.Chat_History.objects.all()
     serializer_class = ChatsSerializer
-
-@api_view(['GET'])
-def GetDeepgramAPI(request):
-    api_key = os.getenv('DEEPGRAM_API_KEY')
-    return Response({'api_key': api_key}, status=HTTP_200_OK)
-
-@api_view(['POST'])
-def CreateAccount(request):
-    user = User.objects.create_user(request.data['username'], request.data['email'], request.data['password'])
-    user.save()
-    return Response({'message': 'Account created successfully'}, status=HTTP_201_CREATED)
-
-@api_view(['POST'])
-def CheckUser(request):
-    user = User.objects.filter(email=request.data['email']).exists()
-    if not user:
-        CreateAccount(request)
-    else:
-        return Response({'message': 'User already exists'}, status=HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 def ResetChat(request):
@@ -87,3 +67,15 @@ def AddChat(request):
         models.Chat_History.objects.create(text=text, user_uid=user_uid, isUser=isUser)
     
     return Response({'message': 'Chat added successfully'}, status=HTTP_200_OK)
+
+@api_view(['POST'])
+def GoogleSearchApi(request):
+    search = GoogleSearch({
+        "q": request.data['query'], 
+        "location": "Indonesia, Jakarta",
+        "api_key": os.getenv('GOOGLE_API_KEY')
+    })
+
+    result = search.get_dict()
+    
+    return Response({'search_results': result}, status=HTTP_200_OK)
