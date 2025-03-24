@@ -77,5 +77,6 @@ def GoogleSearchApi(request):
     })
 
     result = search.get_dict()
-    
+    result = result['search_results']['related_questions'][0]['snippet']
+
     return Response({'search_results': result}, status=HTTP_200_OK)
