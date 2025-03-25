@@ -18,6 +18,7 @@ from django.http import JsonResponse
 from cartesia import Cartesia
 import groq
 from serpapi import GoogleSearch
+import requests
 
 # Load environment variables
 load_dotenv()
@@ -80,3 +81,24 @@ def GoogleSearchApi(request):
     result = result['search_results']['related_questions'][0]['snippet']
 
     return Response({'search_results': result}, status=HTTP_200_OK)
+
+@api_view(['POST'])
+def GenerateImage(request):
+    response = requests.post(
+        f"https://api.stability.ai/v2beta/stable-image/generate/core",
+        headers={
+            "authorization": f"Bearer {os.getenv('STABILITY_API_KEY')}",
+            "accept": "image/*"
+        },
+        files={"none": ''},
+        data={
+            "prompt": request.data['prompt'],
+            "output_format": "jpeg",
+        },
+    )
+
+    if response.status_code == 200:
+        with open("./lighthouse.webp", 'wb') as file:
+            file.write(response.content)
+    else:
+        raise Exception(str(response.json()))
