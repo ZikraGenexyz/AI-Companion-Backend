@@ -98,6 +98,6 @@ def GenerateImage(request):
     )
 
     if response.status_code == 200:
-        return Response({'image': response.content}, status=HTTP_200_OK)
+        return Response({'image': response}, status=HTTP_200_OK)
     else:
         raise Exception(str(response.json()))
