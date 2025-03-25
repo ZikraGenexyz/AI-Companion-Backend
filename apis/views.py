@@ -86,33 +86,37 @@ def GoogleSearchApi(request):
 
 @api_view(['POST'])
 def GenerateImage(request):
-    # response = requests.post(
-    #     f"https://api.stability.ai/v2beta/stable-image/generate/core",
-    #     headers={
-    #         "authorization": f"Bearer {os.getenv('STABILITY_API_KEY')}",
-    #         "accept": "image/*"
-    #     },
-    #     files={"none": ''},
-    #     data={
-    #         "prompt": request.data['prompt'],
-    #         "output_format": "jpeg",
-    #     },
-    # )
+    useDummy = True if request.data['useDummy'] == 'true' else False
 
-    # if response.status_code == 200:
-    #     # Encode binary image data to base64
-    #     image_data = base64.b64encode(response.content).decode('utf-8')
-    #     return Response({
-    #         'success': True,
-    #         'image': image_data,
-    #         'content_type': response.headers.get('Content-Type', 'image/jpeg')
-    #     }, status=HTTP_200_OK)
-    # else:
-    #     return Response({
-    #         'success': False, 
-    #         'error': response.json()
-    #     }, status=HTTP_400_BAD_REQUEST)
-    return Response({
-        'success': True,
-        'image': image_base64,
-    }, status=HTTP_200_OK)
+    if not useDummy:
+        response = requests.post(
+            f"https://api.stability.ai/v2beta/stable-image/generate/core",
+            headers={
+                "authorization": f"Bearer {os.getenv('STABILITY_API_KEY')}",
+                "accept": "image/*"
+            },
+            files={"none": ''},
+            data={
+                "prompt": request.data['prompt'],
+                "output_format": "jpeg",
+            },
+        )
+
+        if response.status_code == 200:
+            # Encode binary image data to base64
+            image_data = base64.b64encode(response.content).decode('utf-8')
+            return Response({
+                'success': True,
+                'image': image_data,
+                'content_type': response.headers.get('Content-Type', 'image/jpeg')
+            }, status=HTTP_200_OK)
+        else:
+            return Response({
+                'success': False, 
+                'error': response.json()
+            }, status=HTTP_400_BAD_REQUEST)
+    else:
+        return Response({
+            'success': True,
+            'image': image_base64,
+        }, status=HTTP_200_OK)
