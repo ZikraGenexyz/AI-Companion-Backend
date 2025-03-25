@@ -46,9 +46,9 @@ def GetChat(request):
     summary = ''
     for c in chat:
         summary += c.text + ', '
-    summary = summary.rstrip(', ')
+    # summary = summary.rstrip(', ')
 
-    # summary += '[Dont Reply to this message]'
+    summary += '[do not respond]'
 
     return Response({'summary': summary}, status=HTTP_200_OK)
 
