@@ -98,7 +98,6 @@ def GenerateImage(request):
     )
 
     if response.status_code == 200:
-        with open(os.path.join(os.getcwd(), "image.jpeg"), 'wb') as file:
-            file.write(response.content)
+        return Response({'image': response.content}, status=HTTP_200_OK)
     else:
         raise Exception(str(response.json()))
