@@ -89,26 +89,59 @@ def GenerateImage(request):
     useDummy = True if request.data['useDummy'] == 'true' else False
 
     if not useDummy:
+        # response = requests.post(
+        #     f"https://api.stability.ai/v2beta/stable-image/generate/core",
+        #     headers={
+        #         "authorization": f"Bearer {os.getenv('STABILITY_API_KEY')}",
+        #         "accept": "image/*"
+        #     },
+        #     files={"none": ''},
+        #     data={
+        #         "prompt": request.data['prompt'],
+        #         "output_format": "jpeg",
+        #     },
+        # )
+
+        engine_id = "stable-diffusion-v1-6"
+        api_host = os.getenv('API_HOST', 'https://api.stability.ai')
+        api_key = os.getenv('STABILITY_API_KEY')
+
+        if api_key is None:
+            raise Exception("Missing Stability API key.")
+
         response = requests.post(
-            f"https://api.stability.ai/v2beta/stable-image/generate/core",
+            f"{api_host}/v1/generation/{engine_id}/text-to-image",
             headers={
-                "authorization": f"Bearer {os.getenv('STABILITY_API_KEY')}",
-                "accept": "image/*"
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "Authorization": f"Bearer {api_key}"
             },
-            files={"none": ''},
-            data={
-                "prompt": request.data['prompt'],
-                "output_format": "jpeg",
+            json={
+                "text_prompts": [
+                    {
+                        "text": request.data['prompt']
+                    }
+                ],
+                "cfg_scale": 7,
+                "height": 1024,
+                "width": 576,
+                "samples": 1,
+                "steps": 30,
             },
         )
 
         if response.status_code == 200:
+            data = response.json()
+
+            image_data = data['artifacts'][0]['base64']
+
             # Encode binary image data to base64
-            image_data = base64.b64encode(response.content).decode('utf-8')
+            # image_data = base64.b64encode(response.content).decode('utf-8')
+            
             return Response({
                 'success': True,
                 'image': image_data,
-                'content_type': response.headers.get('Content-Type', 'image/jpeg')
+                # 'content_type': response.headers.get('Content-Type', 'image/jpeg')
             }, status=HTTP_200_OK)
         else:
             return Response({
