@@ -98,6 +98,15 @@ def GenerateImage(request):
     )
 
     if response.status_code == 200:
-        return Response({'image': response}, status=HTTP_200_OK)
+        # Encode binary image data to base64
+        image_data = base64.b64encode(response.content).decode('utf-8')
+        return Response({
+            'success': True,
+            'image': image_data,
+            'content_type': response.headers.get('Content-Type', 'image/jpeg')
+        }, status=HTTP_200_OK)
     else:
-        raise Exception(str(response.json()))
+        return Response({
+            'success': False, 
+            'error': response.json()
+        }, status=HTTP_400_BAD_REQUEST)
