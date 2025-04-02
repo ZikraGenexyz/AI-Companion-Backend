@@ -11,7 +11,8 @@ class Chat_History(models.Model):
 
 class Friends(models.Model):
     id = models.AutoField(primary_key=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user_id = models.CharField(max_length=100)
     friend_list = models.JSONField("Friends", default={})
+    notification = models.JSONField("Notification", default={})
 
     

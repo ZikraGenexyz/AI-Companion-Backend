@@ -33,6 +33,13 @@ class HistoryChat(generics.ListCreateAPIView):
     queryset = models.Chat_History.objects.all()
     serializer_class = ChatsSerializer
 
+def User_Init(request):
+    user_id = request.data['user_id']
+    if models.Friends.objects.filter(user_id=user_id).first() is None:
+        models.Friends.objects.create(user_id=user_id, friend_list={}, notification={})
+    
+    return Response({'message': 'User initialized successfully'}, status=HTTP_200_OK)
+
 @api_view(['POST'])
 def ResetChat(request):
     models.Chat_History.objects.filter(user_id=request.data['user_id']).delete()
