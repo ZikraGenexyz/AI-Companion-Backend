@@ -158,7 +158,7 @@ def Get_Friend_List(request):
         user = models.Users.objects.filter(user_id=friend_id).first()
         friends.append({
             'id': str(i),
-            'name': user.user_id,
+            'name': user.username,
             'email': user.email,
             'status': 'online'
         })
@@ -167,7 +167,7 @@ def Get_Friend_List(request):
         user = models.Users.objects.filter(user_id=friend_id).first()
         pending.append({
             'id': str(i),
-            'name': user.user_id,
+            'name': user.username,
             'email': user.email,
             'status': 'offline'
         })
@@ -176,7 +176,7 @@ def Get_Friend_List(request):
         user = models.Users.objects.filter(user_id=friend_id).first()
         requested.append({
             'id': str(i),
-            'name': user.user_id,
+            'name': user.username,
             'email': user.email,
             'status': 'offline'
         })
