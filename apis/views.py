@@ -291,6 +291,7 @@ def Send_Friend_Request(request):
 
     return Response({'message': 'Friend request sent'}, status=HTTP_200_OK)
 
+@api_view(['POST'])
 def Search_User(request):
     users = models.Users.objects.filter(username__icontains=request.data['query'])
     
