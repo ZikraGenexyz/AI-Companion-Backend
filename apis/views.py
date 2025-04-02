@@ -146,7 +146,7 @@ def GenerateImage(request):
             'error': response.json()
         }, status=HTTP_400_BAD_REQUEST)
 
-@api_view(['GET'])
+@api_view(['POST'])
 def Get_Friend_List(request):
     friend_list = models.Friends.objects.filter(user_id=request.data['user_id']).first().friend_list
 
