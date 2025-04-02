@@ -142,7 +142,7 @@ def GenerateImage(request):
 
 @api_view(['GET'])
 def Get_Friend_List(request):
-    friend_list = models.Friends.objects.filter(user=request.data['user_id']).first().friend_list
+    friend_list = models.Friends.objects.filter(user_id=request.data['user_id']).first().friend_list
 
     pending = friend_list['pending']
     requested = friend_list['requested']
@@ -157,8 +157,8 @@ def Accept_Friend(request):
     current_user_id = request.data['user_id']
     target_user_id = request.data['target_user_id']
 
-    current_user_friends = models.Friends.objects.filter(user=current_user_id).first()
-    target_user_friends = models.Friends.objects.filter(user=target_user_id).first()
+    current_user_friends = models.Friends.objects.filter(user_id=current_user_id).first()
+    target_user_friends = models.Friends.objects.filter(user_id=target_user_id).first()
     
     current_user_friends.friend_list['pending'].remove(target_user_id)
     current_user_friends.friend_list['friends'].append(target_user_id)
@@ -175,8 +175,8 @@ def Reject_Friend(request):
     current_user_id = request.data['user_id']
     target_user_id = request.data['target_user_id']
 
-    current_user_friends = models.Friends.objects.filter(user=current_user_id).first()
-    target_user_friends = models.Friends.objects.filter(user=target_user_id).first()
+    current_user_friends = models.Friends.objects.filter(user_id=current_user_id).first()
+    target_user_friends = models.Friends.objects.filter(user_id=target_user_id).first()
 
     current_user_friends.friend_list['pending'].remove(target_user_id)
     current_user_friends.save()
@@ -192,12 +192,12 @@ def Remove_Friend(request):
     target_user_id = request.data['target_user_id']
     
     # Get current user's friend list
-    current_user_friends = models.Friends.objects.filter(user=current_user_id).first()
+    current_user_friends = models.Friends.objects.filter(user_id=current_user_id).first()
     if not current_user_friends:
         return Response({'error': 'User not found'}, status=HTTP_400_BAD_REQUEST)
     
     # Get target user's friend list
-    target_user_friends = models.Friends.objects.filter(user=target_user_id).first()
+    target_user_friends = models.Friends.objects.filter(user_id=target_user_id).first()
     if not target_user_friends:
         return Response({'error': 'Target user not found'}, status=HTTP_400_BAD_REQUEST)
     
@@ -245,8 +245,8 @@ def Send_Friend_Request(request):
     current_user_id = request.data['user_id']
     target_user_id = request.data['target_user_id']
 
-    current_user_friends = models.Friends.objects.filter(user=current_user_id).first()
-    target_user_friends = models.Friends.objects.filter(user=target_user_id).first()    
+    current_user_friends = models.Friends.objects.filter(user_id=current_user_id).first()
+    target_user_friends = models.Friends.objects.filter(user_id=target_user_id).first()    
 
     current_user_friends.friend_list['requested'].append(target_user_id)
     current_user_friends.save()
