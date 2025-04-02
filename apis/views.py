@@ -37,9 +37,10 @@ class HistoryChat(generics.ListCreateAPIView):
 def User_Init(request):
     user_id = request.data['user_id']
     email = request.data['email']
+    username = request.data['username']
 
     if models.Users.objects.filter(user_id=user_id).first() is None:
-        models.Users.objects.create(user_id=user_id, email=email, username=email.split('@')[0], active=True)
+        models.Users.objects.create(user_id=user_id, email=email, username=username, active=True)
 
     if models.Friends.objects.filter(user_id=user_id).first() is None:
         models.Friends.objects.create(user_id=user_id, friend_list={}, notification={})
