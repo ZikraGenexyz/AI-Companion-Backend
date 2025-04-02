@@ -154,28 +154,28 @@ def Get_Friend_List(request):
     pending = []
     requested = []
 
-    for i, data in enumerate(friend_list['friends']):
-        user = models.Users.objects.filter(user_id=data).first()
+    for i, friend_id in enumerate(friend_list['friends']):
+        user = models.Users.objects.filter(user_id=friend_id).first()
         friends.append({
-            'id': i,
+            'id': str(i),
             'name': user.user_id,
             'email': user.email,
             'status': 'online'
         })
 
-    for i, data in enumerate(friend_list['pending']):
-        user = models.Users.objects.filter(user_id=data).first()
+    for i, friend_id in enumerate(friend_list['pending']):
+        user = models.Users.objects.filter(user_id=friend_id).first()
         pending.append({
-            'id': i,
+            'id': str(i),
             'name': user.user_id,
             'email': user.email,
             'status': 'offline'
         })
 
-    for i, data in enumerate(friend_list['requested']):
-        user = models.Users.objects.filter(user_id=data).first()
+    for i, friend_id in enumerate(friend_list['requested']):
+        user = models.Users.objects.filter(user_id=friend_id).first()
         requested.append({
-            'id': i,
+            'id': str(i),
             'name': user.user_id,
             'email': user.email,
             'status': 'offline'
