@@ -298,10 +298,11 @@ def Search_User(request):
     user_list = []
 
     for i, user in enumerate(users):
-        user_list.append({
-            'id': user.user_id,
-            'name': user.username,
-            'email': user.email
-        })
+        if user.user_id != request.data['user_id']:
+            user_list.append({
+                'id': user.user_id,
+                'name': user.username,
+                'email': user.email
+            })
 
     return Response({"users": user_list}, status=HTTP_200_OK)
