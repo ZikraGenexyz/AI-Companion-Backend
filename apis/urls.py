@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import HistoryChat, AddChat, GetChat, ResetChat, GoogleSearchApi, GenerateImage, Accept_Friend, Reject_Friend, Send_Friend_Request, Remove_Friend, Get_Friend_List, User_Init
+from .views import HistoryChat, AddChat, GetChat, ResetChat, GoogleSearchApi, GenerateImage, Accept_Friend, Reject_Friend, Send_Friend_Request, Remove_Friend, Get_Friend_List, User_Init, Search_User
 
 urlpatterns = [
     path('/chats', HistoryChat.as_view()),
@@ -14,4 +14,5 @@ urlpatterns = [
     path('/remove-friend', Remove_Friend, name='remove-friend'),
     path('/get-friend-list', Get_Friend_List, name='get-friend-list'),
     path('/user-init', User_Init, name='user-init'),
+    path('/search-user', Search_User, name='search-user'),
 ]
