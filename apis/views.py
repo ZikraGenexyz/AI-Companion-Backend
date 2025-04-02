@@ -290,3 +290,18 @@ def Send_Friend_Request(request):
     target_user_friends.save()
 
     return Response({'message': 'Friend request sent'}, status=HTTP_200_OK)
+
+def Search_User(request):
+    users = models.Users.objects.filter(username__icontains=request.data['query'])
+    
+    user_list = []
+
+    for i, user_id in enumerate(users):
+        user = models.Users.objects.filter(user_id=user_id).first()
+        user_list.append({
+            'id': user_id,
+            'name': user.username,
+            'email': user.email
+        })
+
+    return Response(user_list, status=HTTP_200_OK)
