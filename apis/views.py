@@ -297,10 +297,9 @@ def Search_User(request):
     
     user_list = []
 
-    for i, user_id in enumerate(users):
-        user = models.Users.objects.filter(user_id=user_id).first()
+    for i, user in enumerate(users):
         user_list.append({
-            'id': user_id,
+            'id': user.user_id,
             'name': user.username,
             'email': user.email
         })
