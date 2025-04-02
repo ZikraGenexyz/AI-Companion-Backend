@@ -306,3 +306,19 @@ def Search_User(request):
             })
 
     return Response({"users": user_list}, status=HTTP_200_OK)
+
+@api_view(['PUT'])
+def Cancel_Friend_Request(request):
+    current_user_id = request.data['user_id']
+    target_user_id = request.data['target_user_id']
+
+    current_user_friends = models.Friends.objects.filter(user_id=current_user_id).first()
+    target_user_friends = models.Friends.objects.filter(user_id=target_user_id).first()
+
+    current_user_friends.friend_list['requested'].remove(target_user_id)
+    current_user_friends.save()
+
+    target_user_friends.friend_list['pending'].remove(current_user_id)
+    target_user_friends.save()
+
+    return Response({"message": "Friend request canceled"}, status=HTTP_200_OK)
