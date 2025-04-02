@@ -150,7 +150,42 @@ def GenerateImage(request):
 def Get_Friend_List(request):
     friend_list = models.Friends.objects.filter(user_id=request.data['user_id']).first().friend_list
 
-    return Response(friend_list, status=HTTP_200_OK)
+    friends = []
+    pending = []
+    requested = []
+
+    for i, data in enumerate(friend_list['friends']):
+        user = models.Users.objects.filter(user_id=data).first()
+        friends.append({
+            'id': i,
+            'name': user.user_id,
+            'email': user.email,
+            'status': 'online'
+        })
+
+    for i, data in enumerate(friend_list['pending']):
+        user = models.Users.objects.filter(user_id=data).first()
+        pending.append({
+            'id': i,
+            'name': user.user_id,
+            'email': user.email,
+            'status': 'offline'
+        })
+
+    for i, data in enumerate(friend_list['requested']):
+        user = models.Users.objects.filter(user_id=data).first()
+        requested.append({
+            'id': i,
+            'name': user.user_id,
+            'email': user.email,
+            'status': 'offline'
+        })
+
+    return Response({
+        'friends': friends,
+        'pending': pending,
+        'requested': requested
+    }, status=HTTP_200_OK)
 
 @api_view(['PUT'])
 def Accept_Friend(request):
