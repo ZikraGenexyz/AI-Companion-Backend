@@ -33,6 +33,7 @@ class HistoryChat(generics.ListCreateAPIView):
     queryset = models.Chat_History.objects.all()
     serializer_class = ChatsSerializer
 
+@api_view(['POST'])
 def User_Init(request):
     user_id = request.data['user_id']
     if models.Friends.objects.filter(user_id=user_id).first() is None:
@@ -40,12 +41,12 @@ def User_Init(request):
     
     return Response({'message': 'User initialized successfully'}, status=HTTP_200_OK)
 
-@api_view(['POST'])
+@api_view(['DELETE'])
 def ResetChat(request):
     models.Chat_History.objects.filter(user_id=request.data['user_id']).delete()
     return Response({'message': 'Chat reset successfully'}, status=HTTP_200_OK)
 
-@api_view(['POST'])
+@api_view(['GET'])
 def GetChat(request):
     chat = models.Chat_History.objects.filter(user_id=request.data['user_id'], isUser=True)
     summary = ''
@@ -57,7 +58,7 @@ def GetChat(request):
 
     return Response({'summary': summary}, status=HTTP_200_OK)
 
-@api_view(['PUT'])
+@api_view(['POST'])
 def AddChat(request):
     text = request.data['text']
     user_id = request.data['user_id']
@@ -151,6 +152,7 @@ def Get_Friend_List(request):
                      'pending': pending,
                      'requested': requested}, status=HTTP_200_OK)
 
+@api_view(['PUT'])
 def Accept_Friend(request):
     current_user_id = request.data['user_id']
     target_user_id = request.data['target_user_id']
@@ -168,6 +170,7 @@ def Accept_Friend(request):
     
     return Response({'message': 'Friend request accepted'}, status=HTTP_200_OK)
 
+@api_view(['PUT'])
 def Reject_Friend(request):
     current_user_id = request.data['user_id']
     target_user_id = request.data['target_user_id']
@@ -183,7 +186,7 @@ def Reject_Friend(request):
     
     return Response({'message': 'Friend request rejected'}, status=HTTP_200_OK)
 
-@api_view(['POST'])
+@api_view(['PUT'])
 def Remove_Friend(request):
     current_user_id = request.data['user_id']
     target_user_id = request.data['target_user_id']
@@ -237,6 +240,7 @@ def Remove_Friend(request):
     
     return Response({'message': 'User not found in any friend list'}, status=HTTP_400_BAD_REQUEST)
 
+@api_view(['PUT'])
 def Send_Friend_Request(request):
     current_user_id = request.data['user_id']
     target_user_id = request.data['target_user_id']
