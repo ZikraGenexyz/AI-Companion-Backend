@@ -304,4 +304,4 @@ def Search_User(request):
             'email': user.email
         })
 
-    return Response(user_list, status=HTTP_200_OK)
+    return Response({"users": user_list}, status=HTTP_200_OK)
