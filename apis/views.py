@@ -38,8 +38,8 @@ def User_Init(request):
     user_id = request.data['user_id']
     email = request.data['email']
 
-    if models.User.objects.filter(id=user_id).first() is None:
-        models.User.objects.create(id=user_id, email=email)
+    if models.Users.objects.filter(user_id=user_id).first() is None:
+        models.Users.objects.create(user_id=user_id, email=email, username=email.split('@')[0], active=True)
 
     if models.Friends.objects.filter(user_id=user_id).first() is None:
         models.Friends.objects.create(user_id=user_id, friend_list={}, notification={})
