@@ -343,8 +343,8 @@ def Add_User(request):
     isParent = True if request.data['isParent'] == 'true' else False
     user_id = ''
 
-    while models.Account_Users.objects.filter(user_id=user_id).first() is None:
-        user_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=28))
+    # while models.Account_Users.objects.filter(user_id=user_id).first() is None:
+    user_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=28))
 
     models.Account_Users.objects.create(account=models.Accounts.objects.filter(account_id=account_id).first(), user_id=user_id, username=username, isParent=isParent)
 
