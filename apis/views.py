@@ -341,11 +341,12 @@ def Get_Account_Users(request):
 def Add_User(request):
     account_id = request.data['account_id']
     username = request.data['username']
+    isParent = request.data['isParent']
     user_id = ''
 
     while models.Account_Users.objects.filter(user_id=user_id).first() is None:
         user_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=28))
 
-    models.Account_Users.objects.create(account=models.Accounts.objects.filter(account_id=account_id).first(), user_id=user_id, username=username, isParent=False)
+    models.Account_Users.objects.create(account=models.Accounts.objects.filter(account_id=account_id).first(), user_id=user_id, username=username, isParent=isParent)
 
     return Response({'message': 'User initialized successfully', 'user_id': user_id}, status=HTTP_200_OK)
