@@ -46,20 +46,6 @@ def Account_Init(request):
 
     return Response({'message': 'Account initialized successfully'}, status=HTTP_200_OK)
 
-@api_view(['POST'])
-def User_Init(request):
-    account_id = request.data['account_id']
-    username = request.data['username']
-    user_id = ''
-
-    while models.Account_Users.objects.filter(user_id=user_id).first() is None:
-        user_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=28))
-
-    if models.Account_Users.objects.filter(account=models.Accounts.objects.filter(account_id=account_id).first(), user_id=user_id, username=username, isParent=False).first() is None:
-        models.Account_Users.objects.create(account=models.Accounts.objects.filter(account_id=account_id).first(), user_id=user_id, username=username, isParent=False)
-
-    return Response({'message': 'User initialized successfully', 'user_id': user_id}, status=HTTP_200_OK)
-
 @api_view(['DELETE'])
 def ResetChat(request):
     models.Chat_History.objects.filter(user_id=request.data['user_id']).delete()
@@ -350,3 +336,16 @@ def Get_Account_Users(request):
         })
 
     return Response({"users": user_list}, status=HTTP_200_OK)
+
+@api_view(['POST'])
+def Add_User(request):
+    account_id = request.data['account_id']
+    username = request.data['username']
+    user_id = ''
+
+    while models.Account_Users.objects.filter(user_id=user_id).first() is None:
+        user_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=28))
+
+    models.Account_Users.objects.create(account=models.Accounts.objects.filter(account_id=account_id).first(), user_id=user_id, username=username, isParent=False)
+
+    return Response({'message': 'User initialized successfully', 'user_id': user_id}, status=HTTP_200_OK)
