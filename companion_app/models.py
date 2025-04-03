@@ -27,5 +27,3 @@ class Chat_History(models.Model):
     text = models.TextField(max_length=1000)
     isUser = models.BooleanField(default=False)
     date = models.DateTimeField(auto_now_add=True)
-
-    

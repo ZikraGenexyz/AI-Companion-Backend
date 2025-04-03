@@ -51,7 +51,7 @@ def User_Init(request):
     account_id = request.data['account_id']
     username = request.data['username']
     user_id = ''
-    
+
     while models.Account_Users.objects.filter(user_id=user_id).first() is None:
         user_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=28))
 
@@ -344,6 +344,7 @@ def Get_Account_Users(request):
 
     for user in users:
         user_list.append({
+            'id': user.user_id,
             'name': user.username,
             'isParent': user.isParent
         })
