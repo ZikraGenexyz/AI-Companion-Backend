@@ -39,10 +39,9 @@ class HistoryChat(generics.ListCreateAPIView):
 def Account_Init(request):
     account_id = request.data['account_id']
     email = request.data['email']
-    username = request.data['username']
 
     if models.Accounts.objects.filter(account_id=account_id).first() is None:
-        models.Accounts.objects.create(account_id=account_id, email=email, username=username)
+        models.Accounts.objects.create(account_id=account_id, email=email)
 
     return Response({'message': 'Account initialized successfully'}, status=HTTP_200_OK)
 
