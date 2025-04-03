@@ -19,6 +19,8 @@ from cartesia import Cartesia
 import groq
 from serpapi import GoogleSearch
 import requests
+import random
+import string
 
 # Load environment variables
 load_dotenv()
@@ -34,18 +36,29 @@ class HistoryChat(generics.ListCreateAPIView):
     serializer_class = ChatsSerializer
 
 @api_view(['POST'])
-def User_Init(request):
-    user_id = request.data['user_id']
+def Account_Init(request):
+    account_id = request.data['account_id']
     email = request.data['email']
     username = request.data['username']
 
-    if models.Users.objects.filter(user_id=user_id).first() is None:
-        models.Users.objects.create(user_id=user_id, email=email, username=username, active=True)
+    if models.Accounts.objects.filter(account_id=account_id).first() is None:
+        models.Accounts.objects.create(account_id=account_id, email=email, username=username)
 
-    if models.Friends.objects.filter(user_id=user_id).first() is None:
-        models.Friends.objects.create(user_id=user_id, friend_list={}, notification={})
+    return Response({'message': 'Account initialized successfully'}, status=HTTP_200_OK)
+
+@api_view(['POST'])
+def User_Init(request):
+    account_id = request.data['account_id']
+    username = request.data['username']
+    user_id = ''
     
-    return Response({'message': 'User initialized successfully'}, status=HTTP_200_OK)
+    while models.Account_Users.objects.filter(user_id=user_id).first() is None:
+        user_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=28))
+
+    if models.Account_Users.objects.filter(account=models.Accounts.objects.filter(account_id=account_id).first(), user_id=user_id, username=username, isParent=False).first() is None:
+        models.Account_Users.objects.create(account=models.Accounts.objects.filter(account_id=account_id).first(), user_id=user_id, username=username, isParent=False)
+
+    return Response({'message': 'User initialized successfully', 'user_id': user_id}, status=HTTP_200_OK)
 
 @api_view(['DELETE'])
 def ResetChat(request):
@@ -148,33 +161,32 @@ def GenerateImage(request):
 
 @api_view(['POST'])
 def Get_Friend_List(request):
-    friend_list = models.Friends.objects.filter(user_id=request.data['user_id']).first().friend_list
+    user_id = request.data['user_id']
+    friend_list = models.Account_Users.objects.filter(user_id=user_id).first().friend_list
 
     friends = []
     pending = []
-    requested = []
+    requests = []
 
     for i, friend_id in enumerate(friend_list['friends']):
-        user = models.Users.objects.filter(user_id=friend_id).first()
+        user = models.Account_Users.objects.filter(user_id=friend_id).first()
         friends.append({
             'id': friend_id,
             'name': user.username,
-            'email': user.email,
             'status': 'online'
         })
 
     for i, friend_id in enumerate(friend_list['pending']):
-        user = models.Users.objects.filter(user_id=friend_id).first()
+        user = models.Account_Users.objects.filter(user_id=friend_id).first()
         pending.append({
             'id': friend_id,
             'name': user.username,
-            'email': user.email,
             'status': 'offline'
         })
 
-    for i, friend_id in enumerate(friend_list['requested']):
-        user = models.Users.objects.filter(user_id=friend_id).first()
-        requested.append({
+    for i, friend_id in enumerate(friend_list['requests']):
+        user = models.Account_Users.objects.filter(user_id=friend_id).first()
+        requests.append({
             'id': friend_id,
             'name': user.username,
             'email': user.email,
@@ -184,7 +196,7 @@ def Get_Friend_List(request):
     return Response({
         'friends': friends,
         'pending': pending,
-        'requested': requested
+        'requests': requests
     }, status=HTTP_200_OK)
 
 @api_view(['PUT'])
@@ -192,14 +204,14 @@ def Accept_Friend(request):
     current_user_id = request.data['user_id']
     target_user_id = request.data['target_user_id']
 
-    current_user_friends = models.Friends.objects.filter(user_id=current_user_id).first()
-    target_user_friends = models.Friends.objects.filter(user_id=target_user_id).first()
+    current_user_friends = models.Account_Users.objects.filter(user_id=current_user_id).first()
+    target_user_friends = models.Account_Users.objects.filter(user_id=target_user_id).first()
     
     current_user_friends.friend_list['pending'].remove(target_user_id)
     current_user_friends.friend_list['friends'].append(target_user_id)
     current_user_friends.save()
     
-    target_user_friends.friend_list['requested'].remove(current_user_id)
+    target_user_friends.friend_list['requests'].remove(current_user_id)
     target_user_friends.friend_list['friends'].append(current_user_id)
     target_user_friends.save()
     
@@ -210,13 +222,13 @@ def Reject_Friend(request):
     current_user_id = request.data['user_id']
     target_user_id = request.data['target_user_id']
 
-    current_user_friends = models.Friends.objects.filter(user_id=current_user_id).first()
-    target_user_friends = models.Friends.objects.filter(user_id=target_user_id).first()
+    current_user_friends = models.Account_Users.objects.filter(user_id=current_user_id).first()
+    target_user_friends = models.Account_Users.objects.filter(user_id=target_user_id).first()
 
     current_user_friends.friend_list['pending'].remove(target_user_id)
     current_user_friends.save()
 
-    target_user_friends.friend_list['requested'].remove(current_user_id)
+    target_user_friends.friend_list['requests'].remove(current_user_id)
     target_user_friends.save()
     
     return Response({'message': 'Friend request rejected'}, status=HTTP_200_OK)
@@ -227,12 +239,12 @@ def Remove_Friend(request):
     target_user_id = request.data['target_user_id']
     
     # Get current user's friend list
-    current_user_friends = models.Friends.objects.filter(user_id=current_user_id).first()
+    current_user_friends = models.Account_Users.objects.filter(user_id=current_user_id).first()
     if not current_user_friends:
         return Response({'error': 'User not found'}, status=HTTP_400_BAD_REQUEST)
     
     # Get target user's friend list
-    target_user_friends = models.Friends.objects.filter(user_id=target_user_id).first()
+    target_user_friends = models.Account_Users.objects.filter(user_id=target_user_id).first()
     if not target_user_friends:
         return Response({'error': 'Target user not found'}, status=HTTP_400_BAD_REQUEST)
     
@@ -249,9 +261,9 @@ def Remove_Friend(request):
             
         return Response({'message': 'Friend removed successfully'}, status=HTTP_200_OK)
     
-    elif target_user_id in current_user_friends.friend_list['requested']:
+    elif target_user_id in current_user_friends.friend_list['requests']:
         # Cancel friend request
-        current_user_friends.friend_list['requested'].remove(target_user_id)
+        current_user_friends.friend_list['requests'].remove(target_user_id)
         current_user_friends.save()
         
         # Remove from target user's pending list
@@ -266,9 +278,9 @@ def Remove_Friend(request):
         current_user_friends.friend_list['pending'].remove(target_user_id)
         current_user_friends.save()
         
-        # Remove from target user's requested list
-        if current_user_id in target_user_friends.friend_list['requested']:
-            target_user_friends.friend_list['requested'].remove(current_user_id)
+        # Remove from target user's requests list
+        if current_user_id in target_user_friends.friend_list['requests']:
+            target_user_friends.friend_list['requests'].remove(current_user_id)
             target_user_friends.save()
             
         return Response({'message': 'Friend request rejected'}, status=HTTP_200_OK)
@@ -280,10 +292,10 @@ def Send_Friend_Request(request):
     current_user_id = request.data['user_id']
     target_user_id = request.data['target_user_id']
 
-    current_user_friends = models.Friends.objects.filter(user_id=current_user_id).first()
-    target_user_friends = models.Friends.objects.filter(user_id=target_user_id).first()    
+    current_user_friends = models.Account_Users.objects.filter(user_id=current_user_id).first()
+    target_user_friends = models.Account_Users.objects.filter(user_id=target_user_id).first()    
 
-    current_user_friends.friend_list['requested'].append(target_user_id)
+    current_user_friends.friend_list['requests'].append(target_user_id)
     current_user_friends.save()
 
     target_user_friends.friend_list['pending'].append(current_user_id)
@@ -293,14 +305,14 @@ def Send_Friend_Request(request):
 
 @api_view(['POST'])
 def Search_User(request):
-    users = models.Users.objects.filter(username__icontains=request.data['query'])
+    users = models.Account_Users.objects.filter(username__icontains=request.data['query'])
     
     user_list = []
 
     for i, user in enumerate(users):
-        if user.user_id != request.data['user_id']:
+        if user.account.user_id != request.data['user_id']:
             user_list.append({
-                'id': user.user_id,
+                'id': user.account.user_id,
                 'name': user.username,
                 'email': user.email
             })
@@ -312,13 +324,28 @@ def Cancel_Friend_Request(request):
     current_user_id = request.data['user_id']
     target_user_id = request.data['target_user_id']
 
-    current_user_friends = models.Friends.objects.filter(user_id=current_user_id).first()
-    target_user_friends = models.Friends.objects.filter(user_id=target_user_id).first()
+    current_user_friends = models.Account_Users.objects.filter(user_id=current_user_id).first()
+    target_user_friends = models.Account_Users.objects.filter(user_id=target_user_id).first()
 
-    current_user_friends.friend_list['requested'].remove(target_user_id)
+    current_user_friends.friend_list['requests'].remove(target_user_id)
     current_user_friends.save()
 
     target_user_friends.friend_list['pending'].remove(current_user_id)
     target_user_friends.save()
 
     return Response({"message": "Friend request canceled"}, status=HTTP_200_OK)
+
+@api_view(['POST'])
+def Get_Account_Users(request):
+    account_id = request.data['account_id']
+    users = models.Account_Users.objects.filter(account=models.Accounts.objects.filter(account_id=account_id).first())
+
+    user_list = []
+
+    for user in users:
+        user_list.append({
+            'name': user.username,
+            'isParent': user.isParent
+        })
+
+    return Response({"users": user_list}, status=HTTP_200_OK)
