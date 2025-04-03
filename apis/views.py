@@ -341,7 +341,7 @@ def Get_Account_Users(request):
 def Add_User(request):
     account_id = request.data['account_id']
     username = request.data['username']
-    isParent = request.data['isParent']
+    isParent = True if request.data['isParent'] == 'true' else False
     user_id = ''
 
     while models.Account_Users.objects.filter(user_id=user_id).first() is None:
