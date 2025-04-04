@@ -50,7 +50,7 @@ def ResetChat(request):
     models.Chat_History.objects.filter(user_id=request.data['user_id']).delete()
     return Response({'message': 'Chat reset successfully'}, status=HTTP_200_OK)
 
-@api_view(['GET'])
+@api_view(['POST'])
 def GetChat(request):
     chat = models.Chat_History.objects.filter(user_id=request.data['user_id'], isUser=True)
     summary = ''
@@ -62,7 +62,7 @@ def GetChat(request):
 
     return Response({'summary': summary}, status=HTTP_200_OK)
 
-@api_view(['POST'])
+@api_view(['PUT'])
 def AddChat(request):
     text = request.data['text']
     user_id = request.data['user_id']
@@ -349,3 +349,24 @@ def Add_User(request):
     models.Account_Users.objects.create(account=models.Accounts.objects.filter(account_id=account_id).first(), user_id=user_id, username=username, isParent=isParent)
 
     return Response({'message': 'User initialized successfully', 'user_id': user_id}, status=HTTP_200_OK)
+
+@api_view(['DELETE'])
+def Remove_User(request):
+    user_id = request.data['user_id']
+    models.Account_Users.objects.filter(user_id=user_id).delete()
+
+    return Response({'message': 'User removed successfully'}, status=HTTP_200_OK)
+
+@api_view(['PUT'])
+def Update_User(request):
+    user_id = request.data['user_id']
+    username = request.data['username']
+    isParent = True if request.data['isParent'] == 'true' else False
+
+    user = models.Account_Users.objects.filter(user_id=user_id).first()
+    user.username = username
+    user.isParent = isParent
+    user.save()
+
+    return Response({'message': 'User updated successfully'}, status=HTTP_200_OK)
+
