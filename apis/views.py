@@ -341,7 +341,7 @@ def Add_User(request):
     username = request.data['username']
     user_id = ''
 
-    user_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=28))
+    user_id = ''.join(random.choices(string.ascii_uppercase + string.digits + string.ascii_lowercase, k=28))
 
     models.Children_Accounts.objects.create(account=models.Parents_Accounts.objects.filter(account_id=account_id).first(), user_id=user_id, username=username)
 
