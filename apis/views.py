@@ -147,14 +147,14 @@ def GenerateImage(request):
 @api_view(['POST'])
 def Get_Friend_List(request):
     user_id = request.data['user_id']
-    friend_list = models.Account_Users.objects.filter(user_id=user_id).first().friend_list
+    friend_list = models.Children_Accounts.objects.filter(user_id=user_id).first().friend_list
 
     friends = []
     pending = []
     requests = []
 
     for i, friend_id in enumerate(friend_list['friends']):
-        user = models.Account_Users.objects.filter(user_id=friend_id).first()
+        user = models.Children_Accounts.objects.filter(user_id=friend_id).first()
         friends.append({
             'id': friend_id,
             'name': user.username,
@@ -162,7 +162,7 @@ def Get_Friend_List(request):
         })
 
     for i, friend_id in enumerate(friend_list['pending']):
-        user = models.Account_Users.objects.filter(user_id=friend_id).first()
+        user = models.Children_Accounts.objects.filter(user_id=friend_id).first()
         pending.append({
             'id': friend_id,
             'name': user.username,
@@ -170,7 +170,7 @@ def Get_Friend_List(request):
         })
 
     for i, friend_id in enumerate(friend_list['requests']):
-        user = models.Account_Users.objects.filter(user_id=friend_id).first()
+        user = models.Children_Accounts.objects.filter(user_id=friend_id).first()
         requests.append({
             'id': friend_id,
             'name': user.username,
@@ -189,8 +189,8 @@ def Accept_Friend(request):
     current_user_id = request.data['user_id']
     target_user_id = request.data['target_user_id']
 
-    current_user_friends = models.Account_Users.objects.filter(user_id=current_user_id).first()
-    target_user_friends = models.Account_Users.objects.filter(user_id=target_user_id).first()
+    current_user_friends = models.Children_Accounts.objects.filter(user_id=current_user_id).first()
+    target_user_friends = models.Children_Accounts.objects.filter(user_id=target_user_id).first()
     
     current_user_friends.friend_list['pending'].remove(target_user_id)
     current_user_friends.friend_list['friends'].append(target_user_id)
@@ -207,8 +207,8 @@ def Reject_Friend(request):
     current_user_id = request.data['user_id']
     target_user_id = request.data['target_user_id']
 
-    current_user_friends = models.Account_Users.objects.filter(user_id=current_user_id).first()
-    target_user_friends = models.Account_Users.objects.filter(user_id=target_user_id).first()
+    current_user_friends = models.Children_Accounts.objects.filter(user_id=current_user_id).first()
+    target_user_friends = models.Children_Accounts.objects.filter(user_id=target_user_id).first()
 
     current_user_friends.friend_list['pending'].remove(target_user_id)
     current_user_friends.save()
@@ -224,12 +224,12 @@ def Remove_Friend(request):
     target_user_id = request.data['target_user_id']
     
     # Get current user's friend list
-    current_user_friends = models.Account_Users.objects.filter(user_id=current_user_id).first()
+    current_user_friends = models.Children_Accounts.objects.filter(user_id=current_user_id).first()
     if not current_user_friends:
         return Response({'error': 'User not found'}, status=HTTP_400_BAD_REQUEST)
     
     # Get target user's friend list
-    target_user_friends = models.Account_Users.objects.filter(user_id=target_user_id).first()
+    target_user_friends = models.Children_Accounts.objects.filter(user_id=target_user_id).first()
     if not target_user_friends:
         return Response({'error': 'Target user not found'}, status=HTTP_400_BAD_REQUEST)
     
@@ -277,8 +277,8 @@ def Send_Friend_Request(request):
     current_user_id = request.data['user_id']
     target_user_id = request.data['target_user_id']
 
-    current_user_friends = models.Account_Users.objects.filter(user_id=current_user_id).first()
-    target_user_friends = models.Account_Users.objects.filter(user_id=target_user_id).first()    
+    current_user_friends = models.Children_Accounts.objects.filter(user_id=current_user_id).first()
+    target_user_friends = models.Children_Accounts.objects.filter(user_id=target_user_id).first()    
 
     current_user_friends.friend_list['requests'].append(target_user_id)
     current_user_friends.save()
@@ -290,7 +290,7 @@ def Send_Friend_Request(request):
 
 @api_view(['POST'])
 def Search_User(request):
-    users = models.Account_Users.objects.filter(username__icontains=request.data['query'])
+    users = models.Children_Accounts.objects.filter(username__icontains=request.data['query'])
     
     user_list = []
 
@@ -309,8 +309,8 @@ def Cancel_Friend_Request(request):
     current_user_id = request.data['user_id']
     target_user_id = request.data['target_user_id']
 
-    current_user_friends = models.Account_Users.objects.filter(user_id=current_user_id).first()
-    target_user_friends = models.Account_Users.objects.filter(user_id=target_user_id).first()
+    current_user_friends = models.Children_Accounts.objects.filter(user_id=current_user_id).first()
+    target_user_friends = models.Children_Accounts.objects.filter(user_id=target_user_id).first()
 
     current_user_friends.friend_list['requests'].remove(target_user_id)
     current_user_friends.save()
@@ -323,7 +323,7 @@ def Cancel_Friend_Request(request):
 @api_view(['POST'])
 def Get_Account_Users(request):
     account_id = request.data['account_id']
-    users = models.Account_Users.objects.filter(account=models.Accounts.objects.filter(account_id=account_id).first())
+    users = models.Children_Accounts.objects.filter(account=models.Parents_Accounts.objects.filter(account_id=account_id).first())
 
     user_list = []
 
@@ -343,17 +343,16 @@ def Add_User(request):
     isParent = True if request.data['isParent'] == 'true' else False
     user_id = ''
 
-    # while models.Account_Users.objects.filter(user_id=user_id).first() is None:
     user_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=28))
 
-    models.Account_Users.objects.create(account=models.Accounts.objects.filter(account_id=account_id).first(), user_id=user_id, username=username, isParent=isParent)
+    models.Children_Accounts.objects.create(account=models.Parents_Accounts.objects.filter(account_id=account_id).first(), user_id=user_id, username=username, isParent=isParent)
 
     return Response({'message': 'User initialized successfully', 'user_id': user_id}, status=HTTP_200_OK)
 
 @api_view(['DELETE'])
 def Remove_User(request):
     user_id = request.data['user_id']
-    models.Account_Users.objects.filter(user_id=user_id).delete()
+    models.Children_Accounts.objects.filter(user_id=user_id).delete()
 
     return Response({'message': 'User removed successfully'}, status=HTTP_200_OK)
 
@@ -363,10 +362,15 @@ def Update_User(request):
     username = request.data['username']
     isParent = True if request.data['isParent'] == 'true' else False
 
-    user = models.Account_Users.objects.filter(user_id=user_id).first()
+    user = models.Children_Accounts.objects.filter(user_id=user_id).first()
     user.username = username
     user.isParent = isParent
     user.save()
 
     return Response({'message': 'User updated successfully'}, status=HTTP_200_OK)
 
+@api_view(['GET'])
+def Get_Assistant_ID(request):
+    nekokuma = os.getenv('NEKOKUMA_ID')
+
+    return Response({'nekokuma': nekokuma}, status=HTTP_200_OK)
