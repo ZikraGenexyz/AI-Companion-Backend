@@ -40,8 +40,8 @@ def Account_Init(request):
     account_id = request.data['account_id']
     email = request.data['email']
 
-    if models.Accounts.objects.filter(account_id=account_id).first() is None:
-        models.Accounts.objects.create(account_id=account_id, email=email)
+    if models.Parents_Accounts.objects.filter(account_id=account_id).first() is None:
+        models.Parents_Accounts.objects.create(account_id=account_id, email=email)
 
     return Response({'message': 'Account initialized successfully'}, status=HTTP_200_OK)
 
@@ -330,8 +330,7 @@ def Get_Account_Users(request):
     for user in users:
         user_list.append({
             'id': user.user_id,
-            'name': user.username,
-            'isParent': user.isParent
+            'name': user.username
         })
 
     return Response({"users": user_list}, status=HTTP_200_OK)
@@ -340,12 +339,11 @@ def Get_Account_Users(request):
 def Add_User(request):
     account_id = request.data['account_id']
     username = request.data['username']
-    isParent = True if request.data['isParent'] == 'true' else False
     user_id = ''
 
     user_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=28))
 
-    models.Children_Accounts.objects.create(account=models.Parents_Accounts.objects.filter(account_id=account_id).first(), user_id=user_id, username=username, isParent=isParent)
+    models.Children_Accounts.objects.create(account=models.Parents_Accounts.objects.filter(account_id=account_id).first(), user_id=user_id, username=username)
 
     return Response({'message': 'User initialized successfully', 'user_id': user_id}, status=HTTP_200_OK)
 
@@ -360,11 +358,9 @@ def Remove_User(request):
 def Update_User(request):
     user_id = request.data['user_id']
     username = request.data['username']
-    isParent = True if request.data['isParent'] == 'true' else False
 
     user = models.Children_Accounts.objects.filter(user_id=user_id).first()
     user.username = username
-    user.isParent = isParent
     user.save()
 
     return Response({'message': 'User updated successfully'}, status=HTTP_200_OK)

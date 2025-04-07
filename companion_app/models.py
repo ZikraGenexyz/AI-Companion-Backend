@@ -9,7 +9,7 @@ class Parents_Accounts(models.Model):
 
 class Children_Accounts(models.Model):
     id = models.AutoField(primary_key=True)
-    account = models.ForeignKey(Parents_Accounts, on_delete=models.CASCADE)
+    account = models.ForeignKey(Parents_Accounts, on_delete=models.CASCADE, null=True)
     user_id = models.CharField(max_length=100)
     username = models.CharField(max_length=100)
     isActive = models.BooleanField(default=True)
