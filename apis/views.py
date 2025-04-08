@@ -391,8 +391,9 @@ def Create_Bind_OTP(request):
     user_id = request.data['user_id']
     otp = ''.join(random.choices(string.digits, k=4))
 
-    models.Children_Accounts.objects.filter(user_id=user_id).first().bind_otp = otp
-    models.Children_Accounts.objects.filter(user_id=user_id).first().save()
+    child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+    child.bind_otp = otp
+    child.save()
 
     return Response({'message': 'Bind OTP created successfully', 'otp': otp}, status=HTTP_200_OK)
 
