@@ -12,10 +12,10 @@ class Children_Accounts(models.Model):
     account = models.ForeignKey(Parents_Accounts, on_delete=models.CASCADE, null=True)
     user_id = models.CharField(max_length=100)
     username = models.CharField(max_length=100)
-    gender = models.CharField(max_length=100)
-    birth_date = models.DateField()
-    age = models.IntegerField()
-    school = models.CharField(max_length=100)
+    gender = models.CharField(max_length=100, null=True)
+    birth_date = models.DateField(null=True)
+    age = models.IntegerField(null=True)
+    school = models.CharField(max_length=100, null=True)
     isActive = models.BooleanField(default=True)
     friend_list = models.JSONField("Friends", default={
         "friends": [],

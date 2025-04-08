@@ -21,6 +21,7 @@ from serpapi import GoogleSearch
 import requests
 import random
 import string
+from datetime import datetime
 
 # Load environment variables
 load_dotenv()
@@ -48,7 +49,7 @@ def Account_Init(request):
 @api_view(['POST'])
 def Child_Init(request):
     gender = 'Empty'
-    birth_date = 0000-00-00
+    birth_date = datetime.now().strftime('%YYYY-%MM-%DD')
     school = 'Empty'
     username = request.data['username']
     age = request.data['age']
