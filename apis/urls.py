@@ -30,4 +30,5 @@ urlpatterns = [
     path('/edit-love-note', Edit_Love_Note, name='edit-love-note'),
     path('/get-children', Get_Children, name='get-children'),
     path('/set-null-account', Set_NULL_Account, name='set-null-account'),
+    path('/bind-children-account', Bind_Children_Account, name='bind-children-account'),
 ]
