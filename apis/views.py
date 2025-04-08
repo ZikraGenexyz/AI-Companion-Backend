@@ -468,3 +468,13 @@ def Edit_Love_Note(request):
 
     models.Children_Accounts.objects.filter(user_id=user_id).first().notification['love_notes'][love_note] = new_love_note
     models.Children_Accounts.objects.filter(user_id=user_id).first().save()
+
+@api_view(['POST'])
+def Set_NULL_Account(request):
+    user_id = request.data['user_id']
+    
+    user = models.Children_Accounts.objects.filter(user_id=user_id).first()
+    user.account = None
+    user.save()
+
+    return Response({'message': 'Account set to NULL'}, status=HTTP_200_OK)
