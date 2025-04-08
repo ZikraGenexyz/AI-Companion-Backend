@@ -45,6 +45,20 @@ def Account_Init(request):
 
     return Response({'message': 'Account initialized successfully'}, status=HTTP_200_OK)
 
+@api_view(['POST'])
+def Child_Init(request):
+    gender = None
+    birth_date = None
+    school = None
+    username = request.data['username']
+    age = request.data['age']
+    isActive = True
+    user_id = ''.join(random.choices(string.ascii_uppercase + string.digits + string.ascii_lowercase, k=28))
+
+    models.Children_Accounts.objects.create(account=None, user_id=user_id, username=username, gender=gender, birth_date=birth_date, age=age, school=school, isActive=isActive)
+
+    return Response({'message': 'Child initialized successfully', 'user_id': user_id}, status=HTTP_200_OK)
+
 @api_view(['DELETE'])
 def ResetChat(request):
     models.Chat_History.objects.filter(user_id=request.data['user_id']).delete()

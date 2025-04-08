@@ -21,4 +21,5 @@ urlpatterns = [
     path('/remove-user', Remove_User, name='remove-user'),
     path('/update-user', Update_User, name='update-user'),
     path('/get-assistant-id', Get_Assistant_ID, name='get-assistant-id'),
+    path('/child-init', Child_Init, name='child-init'),
 ]
