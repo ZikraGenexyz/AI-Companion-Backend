@@ -22,4 +22,10 @@ urlpatterns = [
     path('/update-user', Update_User, name='update-user'),
     path('/get-assistant-id', Get_Assistant_ID, name='get-assistant-id'),
     path('/child-init', Child_Init, name='child-init'),
+    path('/create-bind-otp', Create_Bind_OTP, name='create-bind-otp'),
+    path('/verify-bind-otp', Verify_Bind_OTP, name='verify-bind-otp'),
+    path('/get-love-notes', Get_Love_Notes, name='get-love-notes'),
+    path('/add-love-note', Add_Love_Note, name='add-love-note'),
+    path('/remove-love-note', Remove_Love_Note, name='remove-love-note'),
+    path('/edit-love-note', Edit_Love_Note, name='edit-love-note'),
 ]

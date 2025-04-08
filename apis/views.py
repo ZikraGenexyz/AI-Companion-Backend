@@ -386,6 +386,7 @@ def Get_Assistant_ID(request):
 
     return Response({'nekokuma': nekokuma}, status=HTTP_200_OK)
 
+@api_view(['POST'])
 def Create_Bind_OTP(request):
     user_id = request.data['user_id']
     otp = ''.join(random.choices(string.digits, k=4))
