@@ -488,6 +488,7 @@ def Set_NULL_Account(request):
 
     return Response({'message': 'Account set to NULL'}, status=HTTP_200_OK)
 
+@api_view(['POST'])
 def Bind_Children_Account(request):
     user_id = request.data['user_id']
     account_id = request.data['account_id']
