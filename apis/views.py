@@ -48,7 +48,7 @@ def Account_Init(request):
 @api_view(['POST'])
 def Child_Init(request):
     gender = 'Empty'
-    birth_date = '0000-00-00'
+    birth_date = 0000-00-00
     school = 'Empty'
     username = request.data['username']
     age = request.data['age']
