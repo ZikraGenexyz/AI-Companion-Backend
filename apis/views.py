@@ -487,3 +487,13 @@ def Set_NULL_Account(request):
     user.save()
 
     return Response({'message': 'Account set to NULL'}, status=HTTP_200_OK)
+
+def Bind_Children_Account(request):
+    user_id = request.data['user_id']
+    account_id = request.data['account_id']
+
+    user = models.Children_Accounts.objects.filter(user_id=user_id).first()
+    user.account = models.Parents_Accounts.objects.filter(account_id=account_id).first()
+    user.save()
+
+    return Response({'message': 'Account bound successfully'}, status=HTTP_200_OK)
