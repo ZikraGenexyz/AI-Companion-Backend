@@ -412,6 +412,26 @@ def Verify_Bind_OTP(request):
         return Response({'message': 'Bind OTP verified successfully'}, status=HTTP_200_OK)
     else:
         return Response({'message': 'Bind OTP verification failed'}, status=HTTP_400_BAD_REQUEST)
+    
+@api_view(['POST'])
+def Get_Children(request):
+    users = models.Children_Accounts.objects.filter(account=models.Parents_Accounts.objects.filter(account_id=request.data['account_id']).first())
+    
+    user_list = []
+
+    for user in users:
+        user_list.append({
+            'id': user.user_id,
+            'name': user.username,
+            'gender': user.gender,
+            'birth_date': user.birth_date,
+            'age': user.age,
+            'school': user.school,
+            'totalMissions': len(user.notification['missions']),
+            'missions': 0,
+        })
+
+    return Response({'children': user_list}, status=HTTP_200_OK)
 
 @api_view(['POST'])
 def Get_Love_Notes(request):
