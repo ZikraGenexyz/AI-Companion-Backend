@@ -48,9 +48,9 @@ def Account_Init(request):
 
 @api_view(['POST'])
 def Child_Init(request):
-    gender = 'Empty'
-    birth_date = datetime.now().strftime('%YYYY-%MM-%DD')
-    school = 'Empty'
+    gender = None
+    birth_date = None
+    school = None
     username = request.data['username']
     age = request.data['age']
     isActive = True
