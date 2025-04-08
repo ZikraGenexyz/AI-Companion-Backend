@@ -385,3 +385,64 @@ def Get_Assistant_ID(request):
     nekokuma = os.getenv('NEKOKUMA_ID')
 
     return Response({'nekokuma': nekokuma}, status=HTTP_200_OK)
+
+def Create_Bind_OTP(request):
+    user_id = request.data['user_id']
+    otp = ''.join(random.choices(string.digits, k=4))
+
+    models.Children_Accounts.objects.filter(user_id=user_id).first().bind_otp = otp
+    models.Children_Accounts.objects.filter(user_id=user_id).first().save()
+
+    return Response({'message': 'Bind OTP created successfully', 'otp': otp}, status=HTTP_200_OK)
+
+@api_view(['POST'])
+def Verify_Bind_OTP(request):
+    account_id = request.data['account_id']
+    otp = request.data['otp']
+
+    user = models.Children_Accounts.objects.filter(bind_otp=otp).first()
+
+    if user is not None:
+        user.bind_otp = None
+        user.account = models.Parents_Accounts.objects.filter(account_id=account_id).first()
+        user.save()
+
+        return Response({'message': 'Bind OTP verified successfully'}, status=HTTP_200_OK)
+    else:
+        return Response({'message': 'Bind OTP verification failed'}, status=HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+def Get_Love_Notes(request):
+    user_id = request.data['user_id']
+    love_notes = models.Children_Accounts.objects.filter(user_id=user_id).first().notification['love_notes']
+
+    return Response({'love_notes': love_notes}, status=HTTP_200_OK)
+
+@api_view(['POST'])
+def Add_Love_Note(request):
+    user_id = request.data['user_id']
+    love_note = request.data['love_note']
+
+    models.Children_Accounts.objects.filter(user_id=user_id).first().notification['love_notes'].append(love_note)
+    models.Children_Accounts.objects.filter(user_id=user_id).first().save()
+
+    return Response({'message': 'Love note added successfully'}, status=HTTP_200_OK)
+
+@api_view(['POST'])
+def Remove_Love_Note(request):
+    user_id = request.data['user_id']
+    love_note = request.data['love_note']
+
+    models.Children_Accounts.objects.filter(user_id=user_id).first().notification['love_notes'].remove(love_note)
+    models.Children_Accounts.objects.filter(user_id=user_id).first().save()
+
+    return Response({'message': 'Love note removed successfully'}, status=HTTP_200_OK)
+
+@api_view(['POST'])
+def Edit_Love_Note(request):
+    user_id = request.data['user_id']
+    love_note = request.data['love_note']
+    new_love_note = request.data['new_love_note']
+
+    models.Children_Accounts.objects.filter(user_id=user_id).first().notification['love_notes'][love_note] = new_love_note
+    models.Children_Accounts.objects.filter(user_id=user_id).first().save()

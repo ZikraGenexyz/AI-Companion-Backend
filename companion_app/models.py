@@ -22,7 +22,11 @@ class Children_Accounts(models.Model):
         "pending": [],
         "requests": []
     })
-    notification = models.JSONField("Notification", default={})
+    notification = models.JSONField("Notification", default={
+        "missions": [],
+        "love_notes": []
+    })
+    bind_otp = models.CharField(max_length=10, null=True)
 
 class Chat_History(models.Model):
     id = models.AutoField(primary_key=True)
