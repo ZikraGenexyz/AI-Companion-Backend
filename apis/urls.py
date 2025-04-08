@@ -29,4 +29,5 @@ urlpatterns = [
     path('/remove-love-note', Remove_Love_Note, name='remove-love-note'),
     path('/edit-love-note', Edit_Love_Note, name='edit-love-note'),
     path('/get-children', Get_Children, name='get-children'),
+    path('/set-null-account', Set_NULL_Account, name='set-null-account'),
 ]
