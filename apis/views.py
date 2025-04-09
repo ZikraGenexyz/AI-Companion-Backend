@@ -416,19 +416,20 @@ def Verify_Bind_OTP(request):
 @api_view(['POST'])
 def Get_Children(request):
     users = models.Children_Accounts.objects.filter(account=models.Parents_Accounts.objects.filter(account_id=request.data['account_id']).first())
-    
     user_list = []
 
     for user in users:
         user_list.append({
             'id': user.user_id,
-            'name': user.username,
-            'gender': user.gender,
-            'birth_date': user.birth_date,
-            'age': user.age,
-            'school': user.school,
-            'totalMissions': len(user.notification['missions']),
-            'missions': 0,
+            'name': user.user_info['name'],
+            'gender': user.user_info['gender'],
+            'birth_date': user.user_info['birth_date'],
+            'school': user.user_info['school'],
+            'robot_type': user.user_info['robot_type'],
+            'robot_color': user.user_info['robot_color'],
+            'energy_level': user.user_info['energy_level'],
+            'total_missions': len(user.notification['missions']),
+            'completed_missions': 0,
         })
 
     return Response({'children': user_list}, status=HTTP_200_OK)
@@ -437,8 +438,6 @@ def Get_Children(request):
 def Get_Love_Notes(request):
     user_id = request.data['user_id']
     love_notes = models.Children_Accounts.objects.filter(user_id=user_id).first().notification['love_notes']
-
-    # love_notes_list = [note['note'] for note in love_notes if note['completed'] == False]
 
     return Response({'love_notes': love_notes}, status=HTTP_200_OK)
 

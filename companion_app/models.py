@@ -11,11 +11,15 @@ class Children_Accounts(models.Model):
     id = models.AutoField(primary_key=True)
     account = models.ForeignKey(Parents_Accounts, on_delete=models.CASCADE, null=True)
     user_id = models.CharField(max_length=100)
-    username = models.CharField(max_length=100)
-    gender = models.CharField(max_length=100, null=True)
-    birth_date = models.DateField(null=True)
-    age = models.IntegerField(null=True)
-    school = models.CharField(max_length=100, null=True)
+    user_info = models.JSONField("User Information", default={
+        "name": "",
+        "gender": "",
+        "birth_date": "",
+        "school": "",
+        "energy_level": 0,
+        "robot_type": 0,
+        "robot_color": 0,
+    })
     isActive = models.BooleanField(default=True)
     friend_list = models.JSONField("Friends", default={
         "friends": [],
@@ -26,7 +30,6 @@ class Children_Accounts(models.Model):
         "missions": [],
         "love_notes": []
     })
-    bind_otp = models.CharField(max_length=10, null=True)
 
 class Chat_History(models.Model):
     id = models.AutoField(primary_key=True)
