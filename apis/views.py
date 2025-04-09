@@ -478,14 +478,14 @@ def Edit_Love_Note(request):
     return Response({'message': 'Love note updated successfully'}, status=HTTP_200_OK)
 
 @api_view(['POST'])
-def Set_NULL_Account(request):
+def Unbind_Children_Account(request):
     user_id = request.data['user_id']
 
     user = models.Children_Accounts.objects.filter(user_id=user_id).first()
     user.account = None
     user.save()
 
-    return Response({'message': 'Account set to NULL'}, status=HTTP_200_OK)
+    return Response({'message': 'Account unbound successfully'}, status=HTTP_200_OK)
 
 @api_view(['POST'])
 def Bind_Children_Account(request):
