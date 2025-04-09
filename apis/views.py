@@ -472,7 +472,7 @@ def Edit_Love_Note(request):
     love_note = request.data['love_note']
 
     child = models.Children_Accounts.objects.filter(user_id=user_id).first()
-    child.notification['love_notes'][index] = love_note
+    child.notification['love_notes'][index]['note'] = love_note
     child.save()
 
     return Response({'message': 'Love note updated successfully'}, status=HTTP_200_OK)
