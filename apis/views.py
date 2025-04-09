@@ -455,7 +455,7 @@ def Edit_Child(request):
     child.user_info = {
         "name": username,
         "gender": gender,
-        "birth_date": birth_date,
+        "birth_date": birth_date.replace(' 00:00:00.000', ''),
         "school": school,
         "energy_level": child.user_info['energy_level'],
         "robot_type": child.user_info['robot_type'],
