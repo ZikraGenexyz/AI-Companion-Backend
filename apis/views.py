@@ -446,7 +446,11 @@ def Get_Children(request):
 @api_view(['POST'])
 def Get_Love_Notes(request):
     user_id = request.data['user_id']
+    getUncompleted = True if request.data['get_uncompleted'] == 'true' else False
     love_notes = models.Children_Accounts.objects.filter(user_id=user_id).first().notification['love_notes']
+
+    if getUncompleted:
+        love_notes = [note['note'] for note in love_notes if not note['completed']]
 
     return Response({'love_notes': love_notes}, status=HTTP_200_OK)
 
