@@ -48,15 +48,20 @@ def Account_Init(request):
 
 @api_view(['POST'])
 def Child_Init(request):
-    gender = None
-    birth_date = None
-    school = None
     username = request.data['username']
-    age = request.data['age']
     isActive = True
     user_id = ''.join(random.choices(string.ascii_uppercase + string.digits + string.ascii_lowercase, k=28))
+    birth_date = str(datetime.now().year - int(request.data['age'])) + '-01-01'
 
-    models.Children_Accounts.objects.create(account=None, user_id=user_id, username=username, gender=gender, birth_date=birth_date, age=age, school=school, isActive=isActive)
+    models.Children_Accounts.objects.create(account=None, user_id=user_id, username=username, isActive=isActive, user_info={
+        "name": username,
+        "gender": "",
+        "birth_date": birth_date,
+        "school": "",
+        "energy_level": 0,
+        "robot_type": 0,
+        "robot_color": 0,
+    })
 
     return Response({'message': 'Child initialized successfully', 'user_id': user_id}, status=HTTP_200_OK)
 
