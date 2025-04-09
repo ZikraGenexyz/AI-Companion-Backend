@@ -53,7 +53,7 @@ def Child_Init(request):
     user_id = ''.join(random.choices(string.ascii_uppercase + string.digits + string.ascii_lowercase, k=28))
     birth_date = str(datetime.now().year - int(request.data['age'])) + '-01-01'
 
-    models.Children_Accounts.objects.create(account=None, user_id=user_id, username=username, isActive=isActive, user_info={
+    models.Children_Accounts.objects.create(account=None, user_id=user_id, isActive=isActive, user_info={
         "name": username,
         "gender": "",
         "birth_date": birth_date,
