@@ -438,7 +438,9 @@ def Get_Love_Notes(request):
     user_id = request.data['user_id']
     love_notes = models.Children_Accounts.objects.filter(user_id=user_id).first().notification['love_notes']
 
-    return Response({'love_notes': love_notes}, status=HTTP_200_OK)
+    love_notes_list = [note['note'] for note in love_notes if note['completed'] == False]
+
+    return Response({'love_notes': love_notes_list}, status=HTTP_200_OK)
 
 @api_view(['POST'])
 def Add_Love_Note(request):
@@ -497,4 +499,3 @@ def Bind_Children_Account(request):
     user.save()
 
     return Response({'message': 'Account bound successfully'}, status=HTTP_200_OK)
-
