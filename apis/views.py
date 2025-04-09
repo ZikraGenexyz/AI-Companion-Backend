@@ -66,7 +66,7 @@ def Child_Init(request):
     return Response({'message': 'Child initialized successfully', 'user_id': user_id}, status=HTTP_200_OK)
 
 @api_view(['POST'])
-def Get_Child_Info(request):
+def Child_Bind_Status(request):
     user_id = request.data['user_id']
     child = models.Children_Accounts.objects.filter(user_id=user_id).first()
 
