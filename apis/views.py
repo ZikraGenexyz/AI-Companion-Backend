@@ -444,15 +444,9 @@ def Get_Love_Notes(request):
 def Add_Love_Note(request):
     user_id = request.data['user_id']
     love_note = request.data['love_note']
-    schedule = "ASAP"
-    repeat = False
 
     child = models.Children_Accounts.objects.filter(user_id=user_id).first()
-    child.notification['love_notes'].append({
-        'note': love_note,
-        'schedule': schedule,
-        'repeat': repeat
-    })
+    child.notification['love_notes'].append(love_note)
     child.save()
 
     return Response({'message': 'Love note added successfully'}, status=HTTP_200_OK)
@@ -460,10 +454,10 @@ def Add_Love_Note(request):
 @api_view(['POST'])
 def Remove_Love_Note(request):
     user_id = request.data['user_id']
-    love_note = request.data['love_note']
+    index = request.data['index']
 
     child = models.Children_Accounts.objects.filter(user_id=user_id).first()
-    child.notification['love_notes'].remove(love_note)
+    child.notification['love_notes'].pop(index)
     child.save()
 
     return Response({'message': 'Love note removed successfully'}, status=HTTP_200_OK)
@@ -471,12 +465,14 @@ def Remove_Love_Note(request):
 @api_view(['POST'])
 def Edit_Love_Note(request):
     user_id = request.data['user_id']
+    index = request.data['index']
     love_note = request.data['love_note']
-    new_love_note = request.data['new_love_note']
 
     child = models.Children_Accounts.objects.filter(user_id=user_id).first()
-    child.notification['love_notes'][love_note] = new_love_note
+    child.notification['love_notes'][index] = love_note
     child.save()
+
+    return Response({'message': 'Love note updated successfully'}, status=HTTP_200_OK)
 
 @api_view(['POST'])
 def Set_NULL_Account(request):
@@ -498,3 +494,4 @@ def Bind_Children_Account(request):
     user.save()
 
     return Response({'message': 'Account bound successfully'}, status=HTTP_200_OK)
+
