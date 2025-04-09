@@ -418,13 +418,17 @@ def Get_Children(request):
     users = models.Children_Accounts.objects.filter(account=models.Parents_Accounts.objects.filter(account_id=request.data['account_id']).first())
     user_list = []
 
+    gender = None if user.user_info['gender'] == "" else user.user_info['gender']
+    birth_date = None if user.user_info['birth_date'] == "" else user.user_info['birth_date']
+    school = None if user.user_info['school'] == "" else user.user_info['school']
+
     for user in users:
         user_list.append({
             'id': user.user_id,
             'name': user.user_info['name'],
-            'gender': user.user_info['gender'],
-            'birth_date': user.user_info['birth_date'],
-            'school': user.user_info['school'],
+            'gender': gender,
+            'birth_date': birth_date,
+            'school': school,
             'robot_type': user.user_info['robot_type'],
             'robot_color': user.user_info['robot_color'],
             'energy_level': user.user_info['energy_level'],
