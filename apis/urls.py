@@ -31,4 +31,5 @@ urlpatterns = [
     path('/get-children', Get_Children, name='get-children'),
     path('/unbind-children-account', Unbind_Children_Account, name='unbind-children-account'),
     path('/bind-children-account', Bind_Children_Account, name='bind-children-account'),
+    path('/edit-child', Edit_Child, name='edit-child'),
 ]

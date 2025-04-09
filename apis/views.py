@@ -444,6 +444,28 @@ def Get_Children(request):
     return Response({'children': user_list}, status=HTTP_200_OK)
 
 @api_view(['POST'])
+def Edit_Child(request):
+    user_id = request.data['user_id']
+    username = request.data['username']
+    gender = request.data['gender']
+    birth_date = request.data['birth_date']
+    school = request.data['school']
+
+    child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+    child.user_info = {
+        "name": username,
+        "gender": gender,
+        "birth_date": birth_date,
+        "school": school,
+        "energy_level": child.user_info['energy_level'],
+        "robot_type": child.user_info['robot_type'],
+        "robot_color": child.user_info['robot_color'],
+    }
+    child.save()
+
+    return Response({'message': 'Child updated successfully'}, status=HTTP_200_OK)
+
+@api_view(['POST'])
 def Get_Love_Notes(request):
     user_id = request.data['user_id']
     getUncompleted = True if request.data['get_uncompleted'] == 'true' else False
