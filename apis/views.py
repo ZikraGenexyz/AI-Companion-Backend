@@ -446,7 +446,10 @@ def Add_Love_Note(request):
     love_note = request.data['love_note']
 
     child = models.Children_Accounts.objects.filter(user_id=user_id).first()
-    child.notification['love_notes'].append(love_note)
+    child.notification['love_notes'].append({
+        'note': love_note,
+        'completed': False
+    })
     child.save()
 
     return Response({'message': 'Love note added successfully'}, status=HTTP_200_OK)
