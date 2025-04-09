@@ -29,6 +29,7 @@ urlpatterns = [
     path('/remove-love-note', Remove_Love_Note, name='remove-love-note'),
     path('/edit-love-note', Edit_Love_Note, name='edit-love-note'),
     path('/get-children', Get_Children, name='get-children'),
+    path('/get-child-info', Get_Child_Info, name='get-child-info'),
     path('/unbind-children-account', Unbind_Children_Account, name='unbind-children-account'),
     path('/bind-children-account', Bind_Children_Account, name='bind-children-account'),
     path('/edit-child', Edit_Child, name='edit-child'),

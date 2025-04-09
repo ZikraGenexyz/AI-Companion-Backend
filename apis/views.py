@@ -65,6 +65,18 @@ def Child_Init(request):
 
     return Response({'message': 'Child initialized successfully', 'user_id': user_id}, status=HTTP_200_OK)
 
+@api_view(['POST'])
+def Get_Child_Info(request):
+    user_id = request.data['user_id']
+    child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+
+    bind_status = False
+
+    if child.account is not None:
+        bind_status = True
+
+    return Response({'child': child, 'bind_status': bind_status}, status=HTTP_200_OK)
+
 @api_view(['DELETE'])
 def ResetChat(request):
     models.Chat_History.objects.filter(user_id=request.data['user_id']).delete()
