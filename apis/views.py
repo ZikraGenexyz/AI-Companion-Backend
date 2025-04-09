@@ -75,7 +75,7 @@ def Get_Child_Info(request):
     if child.account is not None:
         bind_status = True
 
-    return Response({'child': child, 'bind_status': bind_status}, status=HTTP_200_OK)
+    return Response({'bind_status': bind_status}, status=HTTP_200_OK)
 
 @api_view(['DELETE'])
 def ResetChat(request):
