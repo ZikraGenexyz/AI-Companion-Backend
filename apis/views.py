@@ -493,12 +493,12 @@ def Get_Love_Notes(request):
     love_notes = models.Children_Accounts.objects.filter(user_id=user_id).first().notification['love_notes']
 
     if getUncompleted:
-        love_notes = f'There is {len(love_notes)} love notes for you. '
+        notes = f'There is {len(love_notes)} love notes for you. '
         for i, note in enumerate(love_notes):
             if not note['completed']:
-                love_notes += f'{i+1}. {note['note']}, \n'
-        love_notes = love_notes.rstrip(', \n')
-        return Response({"results":[{"result": love_notes, "toolCallId": request.data['message']['toolCalls'][0]['id']}]}, status=HTTP_200_OK)
+                notes += f'{i+1}. {note['note']}, \n'
+        notes = notes.rstrip(', \n')
+        return Response({"results":[{"result": notes, "toolCallId": request.data['message']['toolCalls'][0]['id']}]}, status=HTTP_200_OK)
     else:
         return Response({'love_notes': love_notes}, status=HTTP_200_OK)
 
