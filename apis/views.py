@@ -486,6 +486,7 @@ def Get_Love_Notes(request):
     try:
         getUncompleted = True if request.data['get_uncompleted'] == 'true' else False
     except:
+        user_id = request.data['message']['toolCalls'][0]['function']['arguments']['user_id']
         getUncompleted = False
 
     love_notes = models.Children_Accounts.objects.filter(user_id=user_id).first().notification['love_notes']
@@ -499,8 +500,6 @@ def Get_Love_Notes(request):
         return Response({"results":[{"result": love_notes, "toolCallId": request.data['message']['toolCalls'][0]['id']}]}, status=HTTP_200_OK)
     else:
         return Response({'love_notes': love_notes}, status=HTTP_200_OK)
-
-
 
 @api_view(['POST'])
 def Add_Love_Note(request):
