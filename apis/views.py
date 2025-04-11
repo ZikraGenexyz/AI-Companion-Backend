@@ -545,3 +545,8 @@ def Bind_Children_Account(request):
     user.save()
 
     return Response({'message': 'Account bound successfully'}, status=HTTP_200_OK)
+
+@api_view(['POST'])
+def Get_Current_Time(request):
+    print(request.data)
+    return Response({'time': datetime.now().strftime('%H:%M:%S')}, status=HTTP_200_OK)
