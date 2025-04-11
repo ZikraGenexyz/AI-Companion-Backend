@@ -555,6 +555,7 @@ def Get_Current_Time(request):
     try:
         # Extract location (city name) from request
         location = request.data['message']['toolCalls'][0]['function']['arguments']['location']
+        print(location)
         # Parse the JSON string if it's not already a dict
         if isinstance(location, str):
             location = json.loads(location)
