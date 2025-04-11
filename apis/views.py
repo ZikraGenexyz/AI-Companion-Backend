@@ -25,6 +25,7 @@ from datetime import datetime
 import pytz
 from timezonefinder import TimezoneFinder
 from geopy.geocoders import Nominatim
+
 # Load environment variables
 load_dotenv()
 
