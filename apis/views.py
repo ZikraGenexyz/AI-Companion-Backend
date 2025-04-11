@@ -552,7 +552,7 @@ def Get_Current_Time(request):
         "results":[
             {
                 'toolCallId': request.data['message']['toolCalls'][0]['id'], 
-                'result': datetime.now().strftime('%H:%M:%S').to_string()
+                'result': datetime.now().strftime('%H:%M:%S')
             }
         ]
     }
