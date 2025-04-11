@@ -482,8 +482,9 @@ def Edit_Child(request):
 
 @api_view(['POST'])
 def Get_Love_Notes(request):
-    user_id = request.data['user_id']
+    print(request.data)
     try:
+        user_id = request.data['user_id']
         getUncompleted = True if request.data['get_uncompleted'] == 'true' else False
     except:
         user_id = request.data['message']['toolCalls'][0]['function']['arguments']['user_id']
