@@ -33,5 +33,4 @@ urlpatterns = [
     path('/unbind-children-account', Unbind_Children_Account, name='unbind-children-account'),
     path('/bind-children-account', Bind_Children_Account, name='bind-children-account'),
     path('/edit-child', Edit_Child, name='edit-child'),
-    path('/get-current-time', Get_Current_Time, name='get-current-time'),
 ]
