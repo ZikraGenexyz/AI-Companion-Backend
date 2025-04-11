@@ -554,14 +554,22 @@ def Get_Current_Time(request):
     print(request.data)
     try:
         # Extract location (city name) from request
-        location = request.data['message']['toolCalls'][0]['function']['arguments']['location']
-        print(location)
-        # Parse the JSON string if it's not already a dict
-        if isinstance(location, str):
-            location = json.loads(location)
+        arguments = request.data['message']['toolCalls'][0]['function']['arguments']
         
-        city = location.get('location')
-        
+        # Handle different formats of the location data
+        if isinstance(arguments, dict):
+            city = arguments.get('location')
+        elif isinstance(arguments, str):
+            try:
+                # Try to parse as JSON
+                arguments_dict = json.loads(arguments)
+                city = arguments_dict.get('location')
+            except json.JSONDecodeError:
+                # If it's not valid JSON, use the string directly
+                city = arguments
+        else:
+            city = None
+            
         if not city:
             # Fallback if location is not provided
             time_message = f"The current time is {datetime.now().strftime('%H:%M')}"
