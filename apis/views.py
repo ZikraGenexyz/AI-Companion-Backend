@@ -548,12 +548,4 @@ def Bind_Children_Account(request):
 
 @api_view(['POST'])
 def Get_Current_Time(request):
-    output = {
-        "results":[
-            {
-                'toolCallId': request.data['message']['toolCalls'][0]['id'], 
-                'result': datetime.now().strftime('%H:%M:%S')
-            }
-        ]
-    }
-    return Response(output, status=HTTP_200_OK)
+    return Response({"results":[{'result': datetime.now().strftime('%H:%M'), 'toolCallId': request.data['message']['toolCalls'][0]['id']}]}, status=HTTP_200_OK)
