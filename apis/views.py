@@ -483,13 +483,24 @@ def Edit_Child(request):
 @api_view(['POST'])
 def Get_Love_Notes(request):
     user_id = request.data['user_id']
-    getUncompleted = True if request.data['get_uncompleted'] == 'true' else False
+    try:
+        getUncompleted = True if request.data['get_uncompleted'] == 'true' else False
+    except:
+        getUncompleted = False
+
     love_notes = models.Children_Accounts.objects.filter(user_id=user_id).first().notification['love_notes']
 
     if getUncompleted:
-        love_notes = [note['note'] for note in love_notes if not note['completed']]
+        love_notes = f'There is {len(love_notes)} love notes for you. '
+        for i, note in enumerate(love_notes):
+            if not note['completed']:
+                love_notes += f'{i+1}. {note['note']}, \n'
+        love_notes = love_notes.rstrip(', \n')
+        return Response({"results":[{"result": love_notes, "toolCallId": request.data['message']['toolCalls'][0]['id']}]}, status=HTTP_200_OK)
+    else:
+        return Response({'love_notes': love_notes}, status=HTTP_200_OK)
 
-    return Response({'love_notes': love_notes}, status=HTTP_200_OK)
+
 
 @api_view(['POST'])
 def Add_Love_Note(request):
