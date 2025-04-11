@@ -487,7 +487,7 @@ def Get_Love_Notes(request):
         getUncompleted = True if request.data['get_uncompleted'] == 'true' else False
     except:
         user_id = request.data['message']['toolCalls'][0]['function']['arguments']['user_id']
-        getUncompleted = False
+        getUncompleted = True
 
     love_notes = models.Children_Accounts.objects.filter(user_id=user_id).first().notification['love_notes']
 
