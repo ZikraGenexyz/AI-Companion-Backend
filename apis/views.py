@@ -22,7 +22,9 @@ import requests
 import random
 import string
 from datetime import datetime
-
+import pytz
+from timezonefinder import TimezoneFinder
+from geopy.geocoders import Nominatim
 # Load environment variables
 load_dotenv()
 
@@ -549,5 +551,42 @@ def Bind_Children_Account(request):
 @api_view(['POST'])
 def Get_Current_Time(request):
     print(request.data)
-    output = {"results":[{"result": "The current time is " + datetime.now().strftime('%H:%M'), "toolCallId": request.data['message']['toolCalls'][0]['id']}]}
+    try:
+        # Extract location (city name) from request
+        location = request.data['message']['toolCalls'][0]['function']['arguments']['location']
+        # Parse the JSON string if it's not already a dict
+        if isinstance(location, str):
+            location = json.loads(location)
+        
+        city = location.get('location')
+        
+        if not city:
+            # Fallback if location is not provided
+            time_message = f"The current time is {datetime.now().strftime('%H:%M')}"
+        else:
+            # Convert city name to timezone
+            geolocator = Nominatim(user_agent="time_app")
+            location_info = geolocator.geocode(city)
+            
+            if location_info:
+                # Get timezone from coordinates
+                tf = TimezoneFinder()
+                timezone_str = tf.timezone_at(lng=location_info.longitude, lat=location_info.latitude)
+                
+                if timezone_str:
+                    # Get current time in the timezone
+                    timezone = pytz.timezone(timezone_str)
+                    current_time = datetime.now(timezone).strftime('%H:%M')
+                    time_message = f"The current time in {city} is {current_time}"
+                else:
+                    # Fallback if timezone not found
+                    time_message = f"Could not determine timezone for {city}. The current time at server is {datetime.now().strftime('%H:%M')}"
+            else:
+                # Fallback if location not found
+                time_message = f"Could not find location {city}. The current time at server is {datetime.now().strftime('%H:%M')}"
+    except Exception as e:
+        # Handle any errors
+        time_message = f"Error determining time: {str(e)}. The current time at server is {datetime.now().strftime('%H:%M')}"
+    
+    output = {"results":[{"result": time_message, "toolCallId": request.data['message']['toolCalls'][0]['id']}]}
     return Response(output, status=HTTP_200_OK)
