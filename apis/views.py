@@ -530,7 +530,7 @@ def Remove_Love_Note(request):
 @api_view(['POST'])
 def Edit_Love_Note(request):
     user_id = request.data['user_id']
-    index = request.data['index']
+    index = int(request.data['index'])
     love_note = request.data['love_note']
 
     child = models.Children_Accounts.objects.filter(user_id=user_id).first()
