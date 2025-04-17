@@ -494,6 +494,7 @@ def Get_Love_Notes(request):
         for i, note in enumerate(love_notes):
             if not note['completed']:
                 notes += f'{i+1}. {note['note']}, \n'
+                love_notes[i]['completed'] = True
         notes = notes.rstrip(', \n')
         return Response({"results":[{"result": notes, "toolCallId": request.data['message']['toolCalls'][0]['id']}]}, status=HTTP_200_OK)
     else:
