@@ -487,14 +487,25 @@ def Get_Love_Notes(request):
         user_id = request.data['message']['toolCalls'][0]['function']['arguments']['user_id']
         getUncompleted = True
 
-    love_notes = models.Children_Accounts.objects.filter(user_id=user_id).first().notification['love_notes']
+    child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+    love_notes = child.notification['love_notes']
 
     if getUncompleted:
-        notes = f'There is {len(love_notes)} love notes for you. '
+        notes = f'There is {len(love_notes)} love notes for you. \n'
+        uncompleted_notes_indices = []
+        
         for i, note in enumerate(love_notes):
             if not note['completed']:
-                notes += f'{i+1}. {note['note']}, \n'
+                notes += f'{note["note"]}, \n'
+                uncompleted_notes_indices.append(i)
+                
+                # Mark the note as completed
                 love_notes[i]['completed'] = True
+        
+        # Save the changes to the database if any notes were marked as completed
+        if uncompleted_notes_indices:
+            child.save()
+            
         notes = notes.rstrip(', \n')
         return Response({"results":[{"result": notes, "toolCallId": request.data['message']['toolCalls'][0]['id']}]}, status=HTTP_200_OK)
     else:
