@@ -446,8 +446,8 @@ def Get_Children(request):
           'name': user.user_info['name'],
           'avatar': 'lib/assets/images/avatar_icon.png',
           'energy': user.user_info['energy_level'],
-          'missions': {'completed': len(completed_missions), 'total': len(user.notification['missions'])},
-          'loveNotes': {'completed': len(completed_notes), 'total': len(user.notification['love_notes'])},
+          'missions': {'completed': completed_missions, 'total': len(user.notification['missions'])},
+          'loveNotes': {'completed': completed_notes, 'total': len(user.notification['love_notes'])},
         })
 
     return Response({'children': user_list}, status=HTTP_200_OK)
