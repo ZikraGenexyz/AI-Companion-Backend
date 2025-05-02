@@ -439,18 +439,15 @@ def Get_Children(request):
         gender = None if user.user_info['gender'] == "" else user.user_info['gender']
         birth_date = None if user.user_info['birth_date'] == "" else user.user_info['birth_date']
         school = None if user.user_info['school'] == "" else user.user_info['school']
+        completed_notes = sum(1 for note in user.notification['love_notes'] if note.get('completed', False))
+        completed_missions = sum(1 for mission in user.notification['missions'] if mission.get('completed', False))
 
         user_list.append({
-            'id': user.user_id,
-            'name': user.user_info['name'],
-            'gender': gender,
-            'birth_date': birth_date,
-            'school': school,
-            'robot_type': user.user_info['robot_type'],
-            'robot_color': user.user_info['robot_color'],
-            'energy_level': user.user_info['energy_level'],
-            'total_missions': len(user.notification['missions']),
-            'completed_missions': 0,
+          'name': user.user_info['name'],
+          'avatar': 'lib/assets/images/avatar_icon.png',
+          'energy': user.user_info['energy_level'],
+          'missions': {'completed': len(completed_missions), 'total': len(user.notification['missions'])},
+          'loveNotes': {'completed': len(completed_notes), 'total': len(user.notification['love_notes'])},
         })
 
     return Response({'children': user_list}, status=HTTP_200_OK)
