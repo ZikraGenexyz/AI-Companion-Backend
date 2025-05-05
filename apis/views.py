@@ -622,7 +622,8 @@ def Add_Mission(request):
                 
                 # Add the URL to the list
                 attachment_urls.append({
-                    'file_name': attachment_file.name,
+                    'original_filename': attachment_file.name,
+                    'storage_filename': unique_filename,
                     'url': attachment_url
                 })
                 
