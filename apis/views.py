@@ -446,6 +446,7 @@ def Get_Children(request):
         completed_missions = sum(1 for mission in user.notification['missions'] if mission.get('completed', False))
 
         user_list.append({
+          'id': user.user_id,
           'name': user.user_info['name'],
           'avatar': 'lib/assets/images/avatar_icon.png',
           'energy': user.user_info['energy_level'],
