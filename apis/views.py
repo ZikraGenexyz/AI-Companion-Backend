@@ -598,6 +598,8 @@ def Add_Mission(request):
         
         # Handle all file attachments from request.FILES
         if request.FILES:
+            print('Attachments found')
+            
             attachment_urls = []
             
             # Process each file in request.FILES
@@ -629,6 +631,8 @@ def Add_Mission(request):
             
             # Add all URLs to the mission data
             mission_data['attachments'] = attachment_urls
+        else:
+            print('No attachments')
 
     # Get the child and add the mission
     child = models.Children_Accounts.objects.filter(user_id=user_id).first()
