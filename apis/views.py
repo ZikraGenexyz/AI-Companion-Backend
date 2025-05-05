@@ -580,13 +580,13 @@ def Get_Mission_List(request):
 def Add_Mission(request):
     user_id = request.data['user_id']
     mission_type = request.data['mission_type']
-    mission_name = request.data['mission_name']
+    mission_title = request.data['mission_title']
     mission_schedule = request.data['mission_schedule']
     mission_repeat = True if request.data['mission_repeat'] == 'true' else False
     
     mission_data = {
         'mission_type': mission_type,
-        'mission_name': mission_name,
+        'mission_title': mission_title,
         'mission_schedule': mission_schedule,
         'mission_repeat': mission_repeat,
         'completed': False
