@@ -593,13 +593,13 @@ def Add_Mission(request):
         'completed': False
     }
     
-    if mission_type == 'homework':
+    if mission_type == 'Homework':
         mission_data['mission_instructions'] = request.data['mission_instructions']
         
         # Handle all file attachments from request.FILES
         if request.FILES:
             print('Attachments found')
-            
+
             attachment_urls = []
             
             # Process each file in request.FILES
