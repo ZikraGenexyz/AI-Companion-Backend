@@ -582,19 +582,21 @@ def Add_Mission(request):
     user_id = request.data['user_id']
     mission_type = request.data['mission_type']
     mission_title = request.data['mission_title']
-    mission_schedule = request.data['mission_schedule']
-    mission_repeat = True if request.data['mission_repeat'] == 'true' else False
+    mission_due_date = request.data['mission_due_date']
+    mission_due_time = request.data['mission_due_time']
+    mission_repeat = request.data['mission_repeat']
     
     mission_data = {
-        'mission_type': mission_type,
-        'mission_title': mission_title,
-        'mission_schedule': mission_schedule,
-        'mission_repeat': mission_repeat,
-        'completed': False
+        'title': mission_title,
+        'due_date': mission_due_date,
+        'due_time': mission_due_time,
+        'category': mission_type,
+        'completed': False,
+        'repeat': mission_repeat,
     }
     
     if mission_type == 'Homework':
-        mission_data['mission_instructions'] = request.data['mission_instructions']
+        mission_data['instructions'] = request.data['mission_instructions']
         
         # Handle all file attachments from request.FILES
         if request.FILES:
@@ -621,11 +623,7 @@ def Add_Mission(request):
                 attachment_url = storage.child(unique_filename).get_url(None)
                 
                 # Add the URL to the list
-                attachment_urls.append({
-                    'original_filename': attachment_file.name,
-                    'storage_filename': unique_filename,
-                    'url': attachment_url
-                })
+                attachment_urls.append(attachment_url)
                 
                 # Delete the temporary file
                 os.remove(temp_file_path)
