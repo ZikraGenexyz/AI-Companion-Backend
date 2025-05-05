@@ -22,6 +22,9 @@ import requests
 import random
 import string
 from datetime import datetime
+from firebase_config import storage
+import uuid
+import tempfile
 
 # Load environment variables
 load_dotenv()
@@ -565,3 +568,70 @@ def Bind_Children_Account(request):
     user.save()
 
     return Response({'message': 'Account bound successfully'}, status=HTTP_200_OK)
+
+def Get_Mission_List(request):
+    user_id = request.data['user_id']
+    child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+    missions = child.notification['missions']
+
+    return Response({'missions': missions}, status=HTTP_200_OK)
+
+@api_view(['POST'])
+def Add_Mission(request):
+    user_id = request.data['user_id']
+    mission_type = request.data['mission_type']
+    mission_name = request.data['mission_name']
+    mission_schedule = request.data['mission_schedule']
+    mission_repeat = True if request.data['mission_repeat'] == 'true' else False
+    
+    mission_data = {
+        'mission_type': mission_type,
+        'mission_name': mission_name,
+        'mission_schedule': mission_schedule,
+        'mission_repeat': mission_repeat,
+        'completed': False
+    }
+    
+    if mission_type == 'homework':
+        mission_data['mission_instructions'] = request.data['mission_instructions']
+        
+        # Handle all file attachments from request.FILES
+        if request.FILES:
+            attachment_urls = []
+            
+            # Process each file in request.FILES
+            for file_key, attachment_file in request.FILES.items():
+                # Generate a unique file name
+                file_extension = attachment_file.name.split('.')[-1]
+                unique_filename = f"mission_attachments/{user_id}/{str(uuid.uuid4())}.{file_extension}"
+                
+                # Create a temporary file
+                with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+                    for chunk in attachment_file.chunks():
+                        temp_file.write(chunk)
+                    temp_file_path = temp_file.name
+                
+                # Upload the temporary file to Firebase storage
+                storage.child(unique_filename).put(temp_file_path)
+                
+                # Get the download URL
+                attachment_url = storage.child(unique_filename).get_url(None)
+                
+                # Add the URL to the list
+                attachment_urls.append({
+                    'file_name': attachment_file.name,
+                    'url': attachment_url
+                })
+                
+                # Delete the temporary file
+                os.remove(temp_file_path)
+            
+            # Add all URLs to the mission data
+            mission_data['attachments'] = attachment_urls
+
+    # Get the child and add the mission
+    child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+    child.notification['missions'].append(mission_data)
+    child.save()
+    
+    return Response({'message': 'Mission added successfully'}, status=HTTP_201_CREATED)
