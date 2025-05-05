@@ -570,7 +570,8 @@ def Bind_Children_Account(request):
 
     return Response({'message': 'Account bound successfully'}, status=HTTP_200_OK)
 
-def Get_Mission_List(request):
+@api_view(['POST'])
+def Get_Missions(request):
     user_id = request.data['user_id']
     child = models.Children_Accounts.objects.filter(user_id=user_id).first()
     missions = child.notification['missions']

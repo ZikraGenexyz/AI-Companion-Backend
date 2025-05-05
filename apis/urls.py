@@ -33,6 +33,6 @@ urlpatterns = [
     path('/unbind-children-account', Unbind_Children_Account, name='unbind-children-account'),
     path('/bind-children-account', Bind_Children_Account, name='bind-children-account'),
     path('/edit-child', Edit_Child, name='edit-child'),
-    path('/get-mission-list', Get_Mission_List, name='get-mission-list'),
+    path('/get-missions', Get_Missions, name='get-missions'),
     path('/add-mission', Add_Mission, name='add-mission'),
 ]
