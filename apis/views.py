@@ -586,7 +586,7 @@ def Add_Mission(request):
     mission_due_date = request.data['mission_due_date']
     mission_due_time = request.data['mission_due_time']
     mission_repeat = request.data['mission_repeat']
-    
+        
     mission_data = {
         'title': mission_title,
         'due_date': mission_due_date,
@@ -640,3 +640,16 @@ def Add_Mission(request):
     child.save()
     
     return Response({'message': 'Mission added successfully'}, status=HTTP_201_CREATED)
+
+def Get_Child_Info(request):
+    user_id = request.data['user_id']
+    child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+
+    mission_list = child.notification['missions']
+    love_note_list = child.notification['love_notes']
+    user_info = child.user_info
+
+    return Response({
+        'missions': mission_list, 
+        'love_notes': love_note_list, 
+        'user_info': user_info}, status=HTTP_200_OK)
