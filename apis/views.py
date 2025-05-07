@@ -641,6 +641,7 @@ def Add_Mission(request):
     
     return Response({'message': 'Mission added successfully'}, status=HTTP_201_CREATED)
 
+@api_view(['POST'])
 def Get_Child_Info(request):
     user_id = request.data['user_id']
     child = models.Children_Accounts.objects.filter(user_id=user_id).first()
