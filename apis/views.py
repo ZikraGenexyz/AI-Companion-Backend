@@ -587,7 +587,10 @@ def Add_Mission(request):
     mission_due_time = request.data['mission_due_time']
     mission_repeat = request.data['mission_repeat']
         
+    mission_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+
     mission_data = {
+        'id': mission_id,
         'title': mission_title,
         'due_date': mission_due_date,
         'due_time': mission_due_time,
@@ -640,6 +643,20 @@ def Add_Mission(request):
     child.save()
     
     return Response({'message': 'Mission added successfully'}, status=HTTP_201_CREATED)
+
+@api_view(['POST'])
+def Complete_Mission(request):
+    user_id = request.data['user_id']
+    mission_id = request.data['mission_id']
+
+    child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+    for mission in child.notification['missions']:
+        if mission['id'] == mission_id:
+            mission['completed'] = True
+            break
+    child.save()
+    
+    return Response({'message': 'Mission completed successfully'}, status=HTTP_200_OK)
 
 @api_view(['POST'])
 def Get_Child_Info(request):
