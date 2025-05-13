@@ -10,7 +10,7 @@ from django.utils.decorators import method_decorator
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.permissions import IsAuthenticated
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, AnonymousUser
 import logging
 import json
 import base64
@@ -48,7 +48,7 @@ class APIKeyAuthentication(BaseAuthentication):
             return None
             
         # Return a default user and None for auth because we're just checking the key
-        return (User.objects.filter(is_superuser=True).first(), None)
+        return (AnonymousUser(), None)
     
     def authenticate_header(self, request):
         return 'Api-Key'
