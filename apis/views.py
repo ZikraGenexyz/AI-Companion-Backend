@@ -1,13 +1,15 @@
 from django.shortcuts import render
 from companion_app import models
 from .serializers import ChatsSerializer
-from rest_framework import generics
+from rest_framework import generics, exceptions
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
-from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_201_CREATED
+from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_201_CREATED, HTTP_401_UNAUTHORIZED
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.utils.decorators import method_decorator
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.authentication import BaseAuthentication
+from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import User
 import logging
 import json
@@ -29,6 +31,40 @@ import tempfile
 # Load environment variables
 load_dotenv()
 
+# API Key Authentication
+class APIKeyAuthentication(BaseAuthentication):
+    def authenticate(self, request):
+        api_key = request.META.get('HTTP_AUTHORIZATION')
+        if not api_key:
+            return None
+            
+        if not api_key.startswith('Api-Key '):
+            return None
+            
+        api_key = api_key.replace('Api-Key ', '')
+        expected_api_key = os.getenv('API_KEY')
+        
+        if not expected_api_key or api_key != expected_api_key:
+            return None
+            
+        # Return a default user and None for auth because we're just checking the key
+        return (User.objects.filter(is_superuser=True).first(), None)
+    
+    def authenticate_header(self, request):
+        return 'Api-Key'
+
+# Handle unauthorized exceptions
+def handle_exception(exc):
+    if isinstance(exc, exceptions.AuthenticationFailed) or isinstance(exc, exceptions.NotAuthenticated):
+        return Response(
+            {"error": "Invalid or missing API key"},
+            status=HTTP_401_UNAUTHORIZED
+        )
+    return Response(
+        {"error": str(exc)},
+        status=HTTP_400_BAD_REQUEST
+    )
+
 # Initialize Groq client
 groq_client = groq.Groq(api_key=os.getenv('GROQ_API_KEY'))
 
@@ -38,18 +74,29 @@ cartesia_client = Cartesia(api_key=os.getenv('CARTESIA_API_KEY'))
 class HistoryChat(generics.ListCreateAPIView):
     queryset = models.Chat_History.objects.all()
     serializer_class = ChatsSerializer
+    authentication_classes = [APIKeyAuthentication]
+    permission_classes = [IsAuthenticated]
 
 @api_view(['POST'])
+@authentication_classes([APIKeyAuthentication])
+@permission_classes([IsAuthenticated])
 def Account_Init(request):
-    account_id = request.data['account_id']
-    email = request.data['email']
+    try:
+        account_id = request.data['account_id']
+        email = request.data['email']
 
-    if models.Parents_Accounts.objects.filter(account_id=account_id).first() is None:
-        models.Parents_Accounts.objects.create(account_id=account_id, email=email)
+        if models.Parents_Accounts.objects.filter(account_id=account_id).first() is None:
+            models.Parents_Accounts.objects.create(account_id=account_id, email=email)
 
-    return Response({'message': 'Account initialized successfully'}, status=HTTP_200_OK)
+        return Response({'message': 'Account initialized successfully'}, status=HTTP_200_OK)
+    except exceptions.AuthenticationFailed as auth_exc:
+        return handle_exception(auth_exc)
+    except Exception as e:
+        return Response({'error': str(e)}, status=HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
+@authentication_classes([APIKeyAuthentication])
+@permission_classes([IsAuthenticated])
 def Child_Init(request):
     username = request.data['username']
     isActive = True
@@ -399,6 +446,17 @@ def Update_User(request):
     user.save()
 
     return Response({'message': 'User updated successfully'}, status=HTTP_200_OK)
+
+@api_view(['GET'])
+@authentication_classes([APIKeyAuthentication])
+@permission_classes([IsAuthenticated])
+def Test_Auth(request):
+    try:
+        return Response({'message': 'Authentication successful', 'status': 'ok'}, status=HTTP_200_OK)
+    except exceptions.AuthenticationFailed as auth_exc:
+        return handle_exception(auth_exc)
+    except Exception as e:
+        return Response({'error': str(e)}, status=HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 def Get_Assistant_ID(request):
