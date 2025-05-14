@@ -646,8 +646,12 @@ def Add_Mission(request):
 
 @api_view(['POST'])
 def Complete_Mission(request):
-    user_id = request.data['user_id']
-    mission_id = request.data['mission_id']
+    try:
+        user_id = request.data['user_id']
+        mission_id = request.data['mission_id']
+    except:
+        user_id = request.data['message']['toolCalls'][0]['function']['arguments']['user_id']
+        mission_id = request.data['message']['toolCalls'][0]['function']['arguments']['mission_id']
 
     child = models.Children_Accounts.objects.filter(user_id=user_id).first()
     for mission in child.notification['missions']:
