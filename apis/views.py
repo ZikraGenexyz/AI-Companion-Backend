@@ -624,15 +624,18 @@ def Add_Mission(request):
                 unique_filename = f"mission_attachments/{user_id}/{str(uuid.uuid4())}.{file_extension}"
                 
                 # Create a temporary file
-                with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-                    for chunk in attachment_file.chunks():
-                        temp_file.write(chunk)
-                    temp_file_path = temp_file.name
+                # with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+                #     for chunk in attachment_file.chunks():
+                #         temp_file.write(chunk)
+                #     temp_file_path = temp_file.name
                 
                 # Upload the temporary file to Firebase storage
                 # storage.child(unique_filename).put(temp_file_path)
                 blob = bucket.blob(unique_filename)
-                blob.upload_from_file(temp_file_path)
+                blob.upload_from_file(
+                    attachment_file.file,
+                    content_type=attachment_file.content_type
+                )
                 
                 # Get the download URL
                 blob.make_public()
@@ -758,15 +761,18 @@ def Edit_Mission(request):
                 unique_filename = f"mission_attachments/{user_id}/{str(uuid.uuid4())}.{file_extension}"
                 
                 # Create a temporary file
-                with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-                    for chunk in attachment_file.chunks():
-                        temp_file.write(chunk)
-                    temp_file_path = temp_file.name
+                # with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+                #     for chunk in attachment_file.chunks():
+                #         temp_file.write(chunk)
+                #     temp_file_path = temp_file.name
                 
                 # Upload the temporary file to Firebase storage
                 # storage.child(unique_filename).put(temp_file_path)
                 blob = bucket.blob(unique_filename)
-                blob.upload_from_file(temp_file_path)
+                blob.upload_from_file(
+                    attachment_file.file,
+                    content_type=attachment_file.content_type
+                )
                 
                 # Get the download URL
                 blob.make_public()
