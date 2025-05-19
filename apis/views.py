@@ -672,6 +672,11 @@ def Edit_Mission(request):
     mission_due_date = request.data['mission_due_date']
     mission_due_time = request.data['mission_due_time']
     mission_repeat = request.data['mission_repeat'] 
+
+    try:
+        mission_attachments_urls = request.data['mission_attachments']
+    except:
+        mission_attachments_urls = None
     
     if mission_type == 'Homework':
         mission_instructions = request.data['mission_instructions']
@@ -685,6 +690,8 @@ def Edit_Mission(request):
             # Delete attachments from Firebase if they exist
             if 'attachments' in mission and mission['attachments']:
                 for attachment_url in mission['attachments']:
+                    if attachment_url in mission_attachments_urls:
+                        continue
                     # Extract the file path from the URL and delete from storage
                     # We can use the URL directly instead of parsing it
                     try:
