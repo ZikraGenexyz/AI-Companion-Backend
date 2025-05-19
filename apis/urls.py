@@ -37,4 +37,5 @@ urlpatterns = [
     path('/add-mission', Add_Mission, name='add-mission'),
     path('/get-child-info', Get_Child_Info, name='get-child-info'),
     path('/complete-mission', Complete_Mission, name='complete-mission'),
+    path('/edit-mission', Edit_Mission, name='edit-mission'),
 ]

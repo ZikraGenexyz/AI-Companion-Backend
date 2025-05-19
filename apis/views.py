@@ -664,6 +664,49 @@ def Complete_Mission(request):
     return Response({'message': 'Mission completed successfully'}, status=HTTP_200_OK)
 
 @api_view(['POST'])
+def Edit_Mission(request):
+    user_id = request.data['user_id']
+    mission_id = request.data['mission_id']
+    mission_type = request.data['mission_type']
+    mission_title = request.data['mission_title']
+    mission_due_date = request.data['mission_due_date']
+    mission_due_time = request.data['mission_due_time']
+    mission_repeat = request.data['mission_repeat'] 
+    
+    if mission_type == 'Homework':
+        mission_instructions = request.data['mission_instructions']
+    
+    child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+    
+    # Find and delete the mission first
+    missions = child.notification['missions']
+    for i, mission in enumerate(missions):
+        if mission['id'] == mission_id:
+            del missions[i]
+            break
+    
+    # Create a new mission with updated data
+    new_mission = {
+        'id': mission_id,
+        'title': mission_title,
+        'due_date': mission_due_date,
+        'due_time': mission_due_time,
+        'repeat': mission_repeat,
+        'category': mission_type,
+        'completed': False
+    }
+    
+    if mission_type == 'Homework':
+        new_mission['instructions'] = mission_instructions
+        new_mission['confirmation'] = False
+    
+    # Add the new mission back to the list
+    child.notification['missions'].append(new_mission)
+    child.save()
+
+    return Response({'message': 'Mission updated successfully'}, status=HTTP_200_OK)
+
+@api_view(['POST'])
 def Get_Child_Info(request):
     user_id = request.data['user_id']
     child = models.Children_Accounts.objects.filter(user_id=user_id).first()
