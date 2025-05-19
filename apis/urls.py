@@ -38,4 +38,5 @@ urlpatterns = [
     path('/get-child-info', Get_Child_Info, name='get-child-info'),
     path('/complete-mission', Complete_Mission, name='complete-mission'),
     path('/edit-mission', Edit_Mission, name='edit-mission'),
+    path('/delete-mission', Delete_Mission, name='delete-mission'),
 ]

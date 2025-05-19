@@ -707,6 +707,17 @@ def Edit_Mission(request):
     return Response({'message': 'Mission updated successfully'}, status=HTTP_200_OK)
 
 @api_view(['POST'])
+def Delete_Mission(request):
+    user_id = request.data['user_id']
+    mission_id = request.data['mission_id']
+
+    child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+    child.notification['missions'] = [mission for mission in child.notification['missions'] if mission['id'] != mission_id]
+    child.save()
+
+    return Response({'message': 'Mission deleted successfully'}, status=HTTP_200_OK)
+
+@api_view(['POST'])
 def Get_Child_Info(request):
     user_id = request.data['user_id']
     child = models.Children_Accounts.objects.filter(user_id=user_id).first()
