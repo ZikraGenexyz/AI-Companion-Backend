@@ -601,6 +601,7 @@ def Add_Mission(request):
     
     if mission_type == 'Homework':
         mission_data['instructions'] = request.data['mission_instructions']
+        mission_data['confirmation'] = False
         
         # Handle all file attachments from request.FILES
         if request.FILES:
@@ -652,7 +653,6 @@ def Complete_Mission(request):
     except:
         user_id = request.data['message']['toolCalls'][0]['function']['arguments']['user_id']
         mission_id = request.data['message']['toolCalls'][0]['function']['arguments']['mission_id']
-        print(user_id, mission_id)
 
     child = models.Children_Accounts.objects.filter(user_id=user_id).first()
     for mission in child.notification['missions']:
