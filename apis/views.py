@@ -699,7 +699,7 @@ def Edit_Mission(request):
                     try:
                         # Get the storage reference from the URL and delete it
                         print("deleting", attachment_url)
-                        storage.delete(attachment_url)
+                        storage.delete(attachment_url, None)  # Pass None as the token parameter
                     except Exception as e:
                         print(f"Error deleting file from Firebase: {e}")
             
