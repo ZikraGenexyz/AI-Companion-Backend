@@ -674,7 +674,7 @@ def Edit_Mission(request):
     mission_repeat = request.data['mission_repeat'] 
 
     try:
-        mission_attachments_urls = request.data['mission_attachments']
+        mission_attachments_urls = json.loads(request.data.get('mission_attachments', '[]'))
     except:
         mission_attachments_urls = None
     
@@ -685,15 +685,17 @@ def Edit_Mission(request):
     
     # Find the mission and delete any attachments from Firebase
     missions = child.notification['missions']
+    existing_attachments = []
+    
     for i, mission in enumerate(missions):
         if mission['id'] == mission_id:
-            # Delete attachments from Firebase if they exist
+            # Save existing attachments that weren't deleted
             if 'attachments' in mission and mission['attachments']:
                 for attachment_url in mission['attachments']:
-                    if attachment_url in mission_attachments_urls:
+                    if mission_attachments_urls and attachment_url in mission_attachments_urls:
+                        existing_attachments.append(attachment_url)
                         continue
                     # Extract the file path from the URL and delete from storage
-                    # We can use the URL directly instead of parsing it
                     try:
                         # Get the storage reference from the URL and delete it
                         storage.delete(attachment_url)
@@ -718,12 +720,48 @@ def Edit_Mission(request):
     if mission_type == 'Homework':
         new_mission['instructions'] = mission_instructions
         new_mission['confirmation'] = False
+        
+        # Handle all file attachments from request.FILES
+        if request.FILES:
+            print('New attachments found')
+            attachment_urls = existing_attachments
+            
+            # Process each file in request.FILES
+            for file_key, attachment_file in request.FILES.items():
+                # Generate a unique file name
+                file_extension = attachment_file.name.split('.')[-1]
+                unique_filename = f"mission_attachments/{user_id}/{str(uuid.uuid4())}.{file_extension}"
+                
+                # Create a temporary file
+                with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+                    for chunk in attachment_file.chunks():
+                        temp_file.write(chunk)
+                    temp_file_path = temp_file.name
+                
+                # Upload the temporary file to Firebase storage
+                storage.child(unique_filename).put(temp_file_path)
+                
+                # Get the download URL
+                attachment_url = storage.child(unique_filename).get_url(None)
+                
+                # Add the URL to the list
+                attachment_urls.append(attachment_url)
+                
+                # Delete the temporary file
+                os.remove(temp_file_path)
+            
+            # Add all URLs to the mission data
+            new_mission['attachments'] = attachment_urls
+        elif existing_attachments:
+            # Keep existing attachments that weren't deleted
+            new_mission['attachments'] = existing_attachments
     
     # Add the new mission back to the list
     child.notification['missions'].append(new_mission)
     child.save()
 
     return Response({'message': 'Mission updated successfully'}, status=HTTP_200_OK)
+
 @api_view(['POST'])
 def Delete_Mission(request):
     user_id = request.data['user_id']
