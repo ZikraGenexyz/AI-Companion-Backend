@@ -706,6 +706,8 @@ def Edit_Mission(request):
                         parsed_url = urlparse(attachment_url)
                         path = parsed_url.path.split('/o/')[1].split('?')[0]
                         storage_path = unquote(path)
+
+                        print("deleting", storage_path)
                         # Now delete the file using the path
                         storage.delete(storage_path, None)
                     except Exception as e:
