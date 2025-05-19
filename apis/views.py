@@ -702,14 +702,16 @@ def Edit_Mission(request):
                         print("deleting", attachment_url)
                         # Parse the URL to get just the path component
                         # URL format: https://firebasestorage.googleapis.com/v0/b/BUCKET/o/PATH?alt=media...
-                        # We need to extract PATH
                         parsed_url = urlparse(attachment_url)
-                        path = parsed_url.path.split('/o/')[1].split('?')[0]
-                        storage_path = unquote(path)
-
-                        print("deleting", storage_path)
-                        # Now delete the file using the path
-                        storage.delete(storage_path, None)
+                        if '/o/' in parsed_url.path:
+                            path = parsed_url.path.split('/o/')[1]
+                            storage_path = unquote(path)
+                            print("storage path:", storage_path)
+                            
+                            # Use the child() method to create reference and then delete
+                            storage.child(storage_path).delete(token=None)
+                        else:
+                            print(f"Invalid URL format: {attachment_url}")
                     except Exception as e:
                         print(f"Error deleting file from Firebase: {e}")
             
