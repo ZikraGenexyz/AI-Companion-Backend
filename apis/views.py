@@ -22,13 +22,20 @@ import requests
 import random
 import string
 from datetime import datetime
-from .firebase_config import storage
+# from .firebase_config import storage
 import uuid
 import tempfile
 from urllib.parse import urlparse, unquote
+from google.cloud import storage
+from google.oauth2 import service_account
 
 # Load environment variables
 load_dotenv()
+
+creds_dict = json.loads(os.getenv("FIREBASE_CREDENTIALS"))
+credentials = service_account.Credentials.from_service_account_info(creds_dict)
+client = storage.Client(credentials=credentials)
+bucket = client.bucket(os.getenv("FIREBASE_BUCKET"))
 
 # Initialize Groq client
 groq_client = groq.Groq(api_key=os.getenv('GROQ_API_KEY'))
@@ -623,10 +630,13 @@ def Add_Mission(request):
                     temp_file_path = temp_file.name
                 
                 # Upload the temporary file to Firebase storage
-                storage.child(unique_filename).put(temp_file_path)
+                # storage.child(unique_filename).put(temp_file_path)
+                blob = bucket.blob(unique_filename)
+                blob.upload_from_file(temp_file_path)
                 
                 # Get the download URL
-                attachment_url = storage.child(unique_filename).get_url(None)
+                blob.make_public()
+                attachment_url = blob.public_url
                 
                 # Add the URL to the list
                 attachment_urls.append(attachment_url)
@@ -709,7 +719,9 @@ def Edit_Mission(request):
                             print("storage path:", storage_path)
                             
                             # Use the child() method to create reference and then delete
-                            storage.child(storage_path).delete(token=None)
+                            # storage.child(storage_path).delete(token=None)
+                            blob = bucket.blob(storage_path)
+                            blob.delete()
                         else:
                             print(f"Invalid URL format: {attachment_url}")
                     except Exception as e:
@@ -752,10 +764,13 @@ def Edit_Mission(request):
                     temp_file_path = temp_file.name
                 
                 # Upload the temporary file to Firebase storage
-                storage.child(unique_filename).put(temp_file_path)
+                # storage.child(unique_filename).put(temp_file_path)
+                blob = bucket.blob(unique_filename)
+                blob.upload_from_file(temp_file_path)
                 
                 # Get the download URL
-                attachment_url = storage.child(unique_filename).get_url(None)
+                blob.make_public()
+                attachment_url = blob.public_url
                 
                 # Add the URL to the list
                 attachment_urls.append(attachment_url)
