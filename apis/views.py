@@ -698,6 +698,7 @@ def Edit_Mission(request):
                     # Extract the file path from the URL and delete from storage
                     try:
                         # Get the storage reference from the URL and delete it
+                        print("deleting", attachment_url)
                         storage.delete(attachment_url)
                     except Exception as e:
                         print(f"Error deleting file from Firebase: {e}")
