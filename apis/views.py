@@ -678,10 +678,22 @@ def Edit_Mission(request):
     
     child = models.Children_Accounts.objects.filter(user_id=user_id).first()
     
-    # Find and delete the mission first
+    # Find the mission and delete any attachments from Firebase
     missions = child.notification['missions']
     for i, mission in enumerate(missions):
         if mission['id'] == mission_id:
+            # Delete attachments from Firebase if they exist
+            if 'attachments' in mission and mission['attachments']:
+                for attachment_url in mission['attachments']:
+                    # Extract the file path from the URL and delete from storage
+                    # We can use the URL directly instead of parsing it
+                    try:
+                        # Get the storage reference from the URL and delete it
+                        storage.delete(attachment_url)
+                    except Exception as e:
+                        print(f"Error deleting file from Firebase: {e}")
+            
+            # Remove the mission from the list
             del missions[i]
             break
     
@@ -705,7 +717,6 @@ def Edit_Mission(request):
     child.save()
 
     return Response({'message': 'Mission updated successfully'}, status=HTTP_200_OK)
-
 @api_view(['POST'])
 def Delete_Mission(request):
     user_id = request.data['user_id']
