@@ -25,7 +25,7 @@ from datetime import datetime
 from .firebase_config import storage
 import uuid
 import tempfile
-from urllib.parse import unquote
+from urllib.parse import urlparse, unquote
 
 # Load environment variables
 load_dotenv()
@@ -703,15 +703,11 @@ def Edit_Mission(request):
                         # Parse the URL to get just the path component
                         # URL format: https://firebasestorage.googleapis.com/v0/b/BUCKET/o/PATH?alt=media...
                         # We need to extract PATH
-                        if '/o/' in attachment_url:
-                            # Get the part after /o/ and before ? or end of string
-                            path = attachment_url.split('/o/')[1].split('?')[0]
-                            # URL decode the path (replace %2F with / etc.)
-                            path = unquote(path)
-                            # Now delete the file using the path
-                            storage.child(path).delete(None)
-                        else:
-                            print(f"Invalid URL format: {attachment_url}")
+                        parsed_url = urlparse(attachment_url)
+                        path = parsed_url.path.split('/o/')[1].split('?')[0]
+                        storage_path = unquote(path)
+                        # Now delete the file using the path
+                        storage.delete(storage_path, None)
                     except Exception as e:
                         print(f"Error deleting file from Firebase: {e}")
             
