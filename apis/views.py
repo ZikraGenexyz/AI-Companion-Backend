@@ -645,7 +645,7 @@ def Add_Mission(request):
                 attachment_urls.append(attachment_url)
                 
                 # Delete the temporary file
-                os.remove(temp_file_path)
+                # os.remove(temp_file_path)
             
             # Add all URLs to the mission data
             mission_data['attachments'] = attachment_urls
@@ -782,7 +782,7 @@ def Edit_Mission(request):
                 attachment_urls.append(attachment_url)
                 
                 # Delete the temporary file
-                os.remove(temp_file_path)
+                # os.remove(temp_file_path)
             
             # Add all URLs to the mission data
             new_mission['attachments'] = attachment_urls
