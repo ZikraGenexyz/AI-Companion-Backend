@@ -716,9 +716,8 @@ def Edit_Mission(request):
                         # Parse the URL to get just the path component
                         # URL format: https://firebasestorage.googleapis.com/v0/b/BUCKET/o/PATH?alt=media...
                         parsed_url = urlparse(attachment_url)
-                        if '/o/' in parsed_url.path:
-                            path = parsed_url.path.split('/o/')[1]
-                            storage_path = unquote(path)
+                        if 'https://storage.googleapis.com/companion-app-1b431.firebasestorage.app/' in parsed_url.path:
+                            storage_path = parsed_url.path.replace('https://storage.googleapis.com/companion-app-1b431.firebasestorage.app/', '')
                             print("storage path:", storage_path)
                             
                             # Use the child() method to create reference and then delete
