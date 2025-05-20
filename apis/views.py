@@ -688,7 +688,7 @@ def Edit_Mission(request):
     mission_repeat = request.data['mission_repeat'] 
 
     try:
-        mission_attachments_urls = json.loads(request.data.get('mission_attachments', '[]'))
+        mission_attachments_urls = json.loads(request.data.get('attachment_urls', '[]'))
     except:
         mission_attachments_urls = None
     
