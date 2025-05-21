@@ -39,5 +39,5 @@ urlpatterns = [
     path('/complete-mission', Complete_Mission, name='complete-mission'),
     path('/edit-mission', Edit_Mission, name='edit-mission'),
     path('/delete-mission', Delete_Mission, name='delete-mission'),
-    path('/get-gpt-response', Get_GPT_Response, name='get-gpt-response'),
+    path('/openai/camera-input', OpenAI_API.Camera_Input, name='camera-input'),
 ]

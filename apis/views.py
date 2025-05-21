@@ -820,36 +820,57 @@ def Get_Child_Info(request):
         'love_notes': love_note_list, 
         'user_info': user_info}, status=HTTP_200_OK)
 
-def Get_GPT_Response(request):
-    prompt = request.data['prompt']
-    image_urls = json.loads(request.data.get('image_urls', '[]'))
-    max_tokens = request.data['max_tokens']
-    api_key = os.getenv('OPENAI_API_KEY')
+class OpenAI_API:
+    def __init__(self):
+        self.api_key = os.getenv('OPENAI_API_KEY')
+        self.client = OpenAI(api_key=self.api_key)
 
-    client = OpenAI(api_key=api_key)
+    def Get_GPT_Response(self, prompt, image_urls, max_tokens):
+        # Build content array starting with text
+        content = [{"type": "text", "text": prompt}]
+        
+        # Add each image URL or base64 to the content array
+        for image_url in image_urls:
+            # Check if the image is in base64 format
+            if image_url.startswith('data:image'):
+                # Handle base64 image
+                content.append({
+                    "type": "image_url",
+                    "image_url": {
+                        "url": image_url
+                    }
+                })
+            else:
+                # Handle regular URL
+                content.append({
+                    "type": "image_url",
+                    "image_url": {
+                        "url": image_url
+                    }
+                })
+        
+        response = self.client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {
+                    "role": "user",
+                    "content": content
+                }
+            ],
+            max_tokens=max_tokens
+        )
+        
+        return response.choices[0].message.content
     
-    # Build content array starting with text
-    content = [{"type": "text", "text": prompt}]
-    
-    # Add each image URL to the content array
-    
-    for image_url in image_urls:
-        content.append({
-            "type": "image_url",
-            "image_url": {
-                "url": image_url
-            }
-        })
-    
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {
-                "role": "user",
-                "content": content
-            }
-        ],
-        max_tokens=max_tokens
-    )
-    
-    return Response({'response': response.choices[0].message.content}, status=HTTP_200_OK)
+    @api_view(['POST'])
+    def Camera_Input(self, request):
+        image_input = request.data['image_input']
+        prompt = request.data['prompt']
+        try:
+            max_tokens = request.data['max_tokens']
+        except:
+            max_tokens = 1000
+
+        image_input = f"data:image/jpeg;base64,{image_input}"
+
+        return Response({'response': self.Get_GPT_Response(prompt, [image_input], max_tokens)}, status=HTTP_200_OK)
