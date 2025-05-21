@@ -28,6 +28,7 @@ import tempfile
 from urllib.parse import urlparse, unquote
 from google.cloud import storage
 from google.oauth2 import service_account
+from openai import OpenAI
 
 # Load environment variables
 load_dotenv()
@@ -818,3 +819,37 @@ def Get_Child_Info(request):
         'missions': mission_list, 
         'love_notes': love_note_list, 
         'user_info': user_info}, status=HTTP_200_OK)
+
+def Get_GPT_Response(request):
+    prompt = request.data['prompt']
+    image_urls = json.loads(request.data.get('image_urls', '[]'))
+    max_tokens = request.data['max_tokens']
+    api_key = os.getenv('OPENAI_API_KEY')
+
+    client = OpenAI(api_key=api_key)
+    
+    # Build content array starting with text
+    content = [{"type": "text", "text": prompt}]
+    
+    # Add each image URL to the content array
+    
+    for image_url in image_urls:
+        content.append({
+            "type": "image_url",
+            "image_url": {
+                "url": image_url
+            }
+        })
+    
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {
+                "role": "user",
+                "content": content
+            }
+        ],
+        max_tokens=max_tokens
+    )
+    
+    return Response({'response': response.choices[0].message.content}, status=HTTP_200_OK)
