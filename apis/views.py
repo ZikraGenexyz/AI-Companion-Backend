@@ -882,5 +882,7 @@ def Homework_Input(request):
 
     if image_urls is None:
         image_urls = []
+    else:
+        image_urls = json.loads(image_urls)
 
     return Response({'response': Get_GPT_Response(prompt, image_urls, max_tokens)}, status=HTTP_200_OK)
