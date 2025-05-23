@@ -871,3 +871,16 @@ def Camera_Input(request):
     image_input = f"data:image/jpeg;base64,{image_input}"
 
     return Response({'response': Get_GPT_Response(prompt, [image_input], max_tokens)}, status=HTTP_200_OK)
+
+def Homework_Input(request):
+    prompt = request.data['prompt']
+    image_urls = request.data['image_urls']
+    try:
+        max_tokens = request.data['max_tokens']
+    except:
+        max_tokens = 1000
+
+    if image_urls is None:
+        image_urls = []
+
+    return Response({'response': Get_GPT_Response(prompt, image_urls, max_tokens)}, status=HTTP_200_OK)
