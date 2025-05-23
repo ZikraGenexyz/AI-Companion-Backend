@@ -872,6 +872,7 @@ def Camera_Input(request):
 
     return Response({'response': Get_GPT_Response(prompt, [image_input], max_tokens)}, status=HTTP_200_OK)
 
+@api_view(['POST'])
 def Homework_Input(request):
     prompt = request.data['prompt']
     image_urls = request.data['image_urls']
