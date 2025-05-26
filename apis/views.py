@@ -472,16 +472,26 @@ def Edit_Child(request):
     gender = request.data['gender']
     birth_date = request.data['birth_date']
     school = request.data['school']
+    robot_type = request.data['robot_type']
+    robot_color = request.data['robot_color']
 
     child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+
+    username = username if len(username) > 0 else child.user_info['name']
+    gender = gender if len(gender) > 0 else child.user_info['gender']
+    birth_date = birth_date.replace(' 00:00:00.000', '') if len(birth_date) > 0 else child.user_info['birth_date']
+    school = school if len(school) > 0 else child.user_info['school']
+    robot_type = robot_type if len(robot_type) > 0 else child.user_info['robot_type']
+    robot_color = robot_color if len(robot_color) > 0 else child.user_info['robot_color']
+
     child.user_info = {
         "name": username,
         "gender": gender,
-        "birth_date": birth_date.replace(' 00:00:00.000', ''),
+        "birth_date": birth_date,
         "school": school,
         "energy_level": child.user_info['energy_level'],
-        "robot_type": child.user_info['robot_type'],
-        "robot_color": child.user_info['robot_color'],
+        "robot_type": robot_type,
+        "robot_color": robot_color,
     }
     child.save()
 
