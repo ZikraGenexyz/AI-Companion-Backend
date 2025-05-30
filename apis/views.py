@@ -675,16 +675,23 @@ def Complete_Mission(request):
     try:
         user_id = request.data['user_id']
         mission_id = request.data['mission_id']
+
+        child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+        for mission in child.notification['missions']:
+            if mission['id'] == mission_id:
+                mission['completed'] = True
+                break
+        child.save()
     except:
         user_id = request.data['message']['toolCalls'][0]['function']['arguments']['user_id']
         mission_id = request.data['message']['toolCalls'][0]['function']['arguments']['mission_id']
 
-    child = models.Children_Accounts.objects.filter(user_id=user_id).first()
-    for mission in child.notification['missions']:
-        if mission['id'] == mission_id:
-            mission['completed'] = True
-            break
-    child.save()
+        child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+        for mission in child.notification['missions']:
+            if mission['id'] == mission_id:
+                mission['confirmation'] = True
+                break
+        child.save()
     
     return Response({'message': 'Mission completed successfully'}, status=HTTP_200_OK)
 
