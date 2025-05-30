@@ -21,7 +21,7 @@ from serpapi import GoogleSearch
 import requests
 import random
 import string
-from datetime import datetime
+from datetime import datetime, timedelta
 # from .firebase_config import storage
 import uuid
 import tempfile
@@ -845,7 +845,7 @@ def Get_GPT_Response(prompt, image_urls, max_tokens):
             print("Error: OpenAI API key is missing")
             return "Sorry, I couldn't process your request due to a configuration issue."
         
-        client = OpenAI(api_key=api_key)
+        client = OpenAI(api_key=api_key, timeout=60.0)  # Increased timeout
         content = [{"type": "text", "text": prompt}]
 
         # Add each image URL or base64 to the content array
@@ -865,17 +865,30 @@ def Get_GPT_Response(prompt, image_urls, max_tokens):
                     if 'firebasestorage' in image_url:
                         # Make sure the URL is publicly accessible
                         try:
-                            # If the URL doesn't have a token and it's from Firebase Storage, 
-                            # we need to make sure it's a publicly accessible URL
-                            if 'storage.googleapis.com' in image_url and '?' not in image_url:
-                                # Create blob reference and make it public if not already
-                                storage_path = image_url.replace('https://storage.googleapis.com/companion-app-1b431.firebasestorage.app/', '')
+                            # If URL is from Firebase Storage, get the object directly
+                            if 'storage.googleapis.com' in image_url:
+                                # Extract the storage path from the URL
+                                parsed_url = urlparse(image_url)
+                                path = unquote(parsed_url.path)
+                                
+                                # Remove the bucket name prefix from the path
+                                bucket_prefix = f"/storage/v1/b/{os.getenv('FIREBASE_BUCKET')}/o/"
+                                if path.startswith("/"):
+                                    storage_path = path.lstrip("/")
+                                if "companion-app-1b431.firebasestorage.app/" in storage_path:
+                                    storage_path = storage_path.replace("companion-app-1b431.firebasestorage.app/", "")
+                                
+                                # Create a signed URL with a long expiration time (1 hour)
                                 blob = bucket.blob(storage_path)
-                                blob.make_public()
-                                image_url = blob.public_url
-                                print(f"Made Firebase Storage URL public: {image_url}")
+                                image_url = blob.generate_signed_url(
+                                    version="v4",
+                                    expiration=datetime.timedelta(hours=1),
+                                    method="GET"
+                                )
+                                print(f"Generated signed URL: {image_url[:100]}...")
                         except Exception as e:
-                            print(f"Error making Firebase URL public: {str(e)}")
+                            print(f"Error processing Firebase URL: {str(e)}")
+                            # Continue with the original URL if there's an error
                     
                     # Handle regular URL
                     print(f"Processing image URL: {image_url[:50]}...")
@@ -903,23 +916,59 @@ def Get_GPT_Response(prompt, image_urls, max_tokens):
 
         print(f"Sending request to OpenAI with {len(content)-1} images")
         
+        # Try to verify the images are accessible
+        for i, item in enumerate(content):
+            if i > 0:  # Skip the text prompt
+                try:
+                    url = item.get('image_url', {}).get('url', '')
+                    if url.startswith('http'):
+                        # Do a HEAD request to verify the URL is accessible
+                        test_response = requests.head(url, timeout=5)
+                        print(f"Image URL {i} status: {test_response.status_code}")
+                        if test_response.status_code != 200:
+                            print(f"Warning: Image URL {i} returned status {test_response.status_code}")
+                except Exception as e:
+                    print(f"Error checking image URL {i}: {str(e)}")
+        
         # Make the OpenAI API call
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {
-                    "role": "user",
-                    "content": content
-                }
-            ],
-            max_tokens=max_tokens
-        )
-
-        return response.choices[0].message.content
+        try:
+            print("Calling OpenAI API...")
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": content
+                    }
+                ],
+                max_tokens=max_tokens
+            )
+            print("OpenAI API call successful")
+            return response.choices[0].message.content
+        except Exception as api_error:
+            print(f"OpenAI API error: {str(api_error)}")
+            # If we have multiple images and get an error, try with just one image
+            if len(content) > 2:  # If we have text + multiple images
+                print("Retrying with only one image...")
+                reduced_content = [content[0], content[1]]  # Just text + first image
+                response = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": reduced_content
+                        }
+                    ],
+                    max_tokens=max_tokens
+                )
+                return response.choices[0].message.content + "\n\n(Note: Only the first image was processed due to an error with multiple images.)"
+            raise  # Re-raise if the fallback also fails
         
     except Exception as e:
         print(f"Error in Get_GPT_Response: {str(e)}")
-        return f"I encountered an error while processing your request. Please try again later."
+        import traceback
+        traceback.print_exc()
+        return f"I encountered an error while processing your request. Please try again later. Error details: {str(e)}"
     
 @api_view(['POST'])
 def Camera_Input(request):
