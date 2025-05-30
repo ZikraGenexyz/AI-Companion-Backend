@@ -861,7 +861,24 @@ def Get_GPT_Response(prompt, image_urls, max_tokens):
                         }
                     })
                 elif image_url.startswith('http'):
+                    # For Firebase Storage URLs, ensure they're properly formatted
+                    if 'firebasestorage' in image_url:
+                        # Make sure the URL is publicly accessible
+                        try:
+                            # If the URL doesn't have a token and it's from Firebase Storage, 
+                            # we need to make sure it's a publicly accessible URL
+                            if 'storage.googleapis.com' in image_url and '?' not in image_url:
+                                # Create blob reference and make it public if not already
+                                storage_path = image_url.replace('https://storage.googleapis.com/companion-app-1b431.firebasestorage.app/', '')
+                                blob = bucket.blob(storage_path)
+                                blob.make_public()
+                                image_url = blob.public_url
+                                print(f"Made Firebase Storage URL public: {image_url}")
+                        except Exception as e:
+                            print(f"Error making Firebase URL public: {str(e)}")
+                    
                     # Handle regular URL
+                    print(f"Processing image URL: {image_url[:50]}...")
                     content.append({
                         "type": "image_url",
                         "image_url": {
@@ -884,6 +901,8 @@ def Get_GPT_Response(prompt, image_urls, max_tokens):
         except (ValueError, TypeError):
             max_tokens = 1000
 
+        print(f"Sending request to OpenAI with {len(content)-1} images")
+        
         # Make the OpenAI API call
         response = client.chat.completions.create(
             model="gpt-4o",
@@ -923,13 +942,17 @@ def Homework_Input(request):
         
         # Parse image_urls with proper error handling
         try:
-            image_urls = json.loads(request.data.get('image_urls', '[]'))
+            raw_image_urls = request.data.get('image_urls', '[]')
+            print(f"Raw image_urls: {raw_image_urls[:100]}...")  # Log first 100 chars
+            
+            image_urls = json.loads(raw_image_urls)
             if not isinstance(image_urls, list):
+                print(f"image_urls is not a list, it's a {type(image_urls)}")
                 image_urls = []
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
             # Handle invalid JSON
+            print(f"JSON decode error in image_urls: {str(e)}")
             image_urls = []
-            print("Error: Invalid JSON in image_urls")
         
         # Get max_tokens with proper error handling
         try:
@@ -937,15 +960,46 @@ def Homework_Input(request):
         except (ValueError, TypeError):
             max_tokens = 1000
             
-        # Filter out any invalid URLs
+        # Validate and fix URLs
         valid_image_urls = []
-        for url in image_urls:
-            if isinstance(url, str) and (url.startswith('http') or url.startswith('data:image')):
+        for i, url in enumerate(image_urls):
+            if not isinstance(url, str):
+                print(f"URL at index {i} is not a string, it's a {type(url)}")
+                continue
+                
+            if url.startswith('http') or url.startswith('data:image'):
+                # Basic URL validation
                 valid_image_urls.append(url)
+                print(f"Valid URL found: {url[:50]}...")  # Log first 50 chars
             else:
-                print(f"Skipping invalid URL: {url}")
+                print(f"Invalid URL format at index {i}: {url[:50]}...")
         
         print(f"Processing {len(valid_image_urls)} valid image URLs")
+        
+        # If we don't have any valid URLs, check if we can extract them from the request
+        if not valid_image_urls and request.FILES:
+            print("No valid URLs in JSON, but found files in request")
+            temp_image_urls = []
+            
+            for file_key, attachment_file in request.FILES.items():
+                # Generate a unique file name
+                file_extension = attachment_file.name.split('.')[-1]
+                unique_filename = f"homework_input/{str(uuid.uuid4())}.{file_extension}"
+                
+                # Upload to Firebase storage
+                blob = bucket.blob(unique_filename)
+                blob.upload_from_file(
+                    attachment_file.file,
+                    content_type=attachment_file.content_type
+                )
+                
+                # Make it public and get URL
+                blob.make_public()
+                image_url = blob.public_url
+                temp_image_urls.append(image_url)
+                print(f"Uploaded file and got URL: {image_url}")
+            
+            valid_image_urls = temp_image_urls
         
         # Call the GPT response function with validated data
         response = Get_GPT_Response(prompt, valid_image_urls, max_tokens)
@@ -953,6 +1007,7 @@ def Homework_Input(request):
     
     except KeyError as e:
         # Missing required field
+        print(f"Missing required field: {str(e)}")
         return Response({
             'error': f'Missing required field: {str(e)}',
             'message': 'Failed to process homework input'
@@ -961,6 +1016,8 @@ def Homework_Input(request):
     except Exception as e:
         # Catch any other exceptions
         print(f"Error in Homework_Input: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return Response({
             'error': str(e),
             'message': 'An error occurred while processing the homework input'
