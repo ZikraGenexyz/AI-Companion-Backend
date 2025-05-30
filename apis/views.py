@@ -892,15 +892,12 @@ def Camera_Input(request):
 @api_view(['POST'])
 def Homework_Input(request):
     prompt = request.data['prompt']
-    image_urls = request.data['image_urls']
+    image_urls = json.loads(request.data.get('image_urls', '[]'))
     try:
         max_tokens = request.data['max_tokens']
     except:
         max_tokens = 1000
 
-    if image_urls is None:
-        image_urls = []
-    else:
-        image_urls = json.loads(image_urls)
+    print(image_urls)
 
     return Response({'response': Get_GPT_Response(prompt, image_urls, max_tokens)}, status=HTTP_200_OK)
