@@ -838,43 +838,69 @@ def Get_Child_Info(request):
         'user_info': user_info}, status=HTTP_200_OK)
 
 def Get_GPT_Response(prompt, image_urls, max_tokens):
-    # Build content array starting with text
-    api_key = os.getenv('OPENAI_API_KEY')
-    client = OpenAI(api_key=api_key)
-    content = [{"type": "text", "text": prompt}]
+    try:
+        # Build content array starting with text
+        api_key = os.getenv('OPENAI_API_KEY')
+        if not api_key:
+            print("Error: OpenAI API key is missing")
+            return "Sorry, I couldn't process your request due to a configuration issue."
+        
+        client = OpenAI(api_key=api_key)
+        content = [{"type": "text", "text": prompt}]
 
-    # Add each image URL or base64 to the content array
-    for image_url in image_urls:
-        # Check if the image is in base64 format
-        if image_url.startswith('data:image'):
-            # Handle base64 image
-            content.append({
-                "type": "image_url",
-                "image_url": {
-                    "url": image_url
+        # Add each image URL or base64 to the content array
+        for image_url in image_urls:
+            # Check if the image is in base64 format
+            if isinstance(image_url, str):
+                if image_url.startswith('data:image'):
+                    # Handle base64 image
+                    content.append({
+                        "type": "image_url",
+                        "image_url": {
+                            "url": image_url
+                        }
+                    })
+                elif image_url.startswith('http'):
+                    # Handle regular URL
+                    content.append({
+                        "type": "image_url",
+                        "image_url": {
+                            "url": image_url
+                        }
+                    })
+                else:
+                    print(f"Skipping invalid image URL format: {image_url[:30]}...")
+            else:
+                print(f"Skipping non-string image URL: {type(image_url)}")
+
+        if len(content) <= 1:
+            print("Warning: No valid images were provided")
+            
+        # Ensure max_tokens is an integer and has a reasonable value
+        try:
+            max_tokens = int(max_tokens)
+            if max_tokens <= 0 or max_tokens > 4096:
+                max_tokens = 1000
+        except (ValueError, TypeError):
+            max_tokens = 1000
+
+        # Make the OpenAI API call
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {
+                    "role": "user",
+                    "content": content
                 }
-            })
-        else:
-            # Handle regular URL
-            content.append({
-                "type": "image_url",
-                "image_url": {
-                    "url": image_url
-                }
-            })
+            ],
+            max_tokens=max_tokens
+        )
 
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {
-                "role": "user",
-                "content": content
-            }
-        ],
-        max_tokens=max_tokens
-    )
-
-    return response.choices[0].message.content
+        return response.choices[0].message.content
+        
+    except Exception as e:
+        print(f"Error in Get_GPT_Response: {str(e)}")
+        return f"I encountered an error while processing your request. Please try again later."
     
 @api_view(['POST'])
 def Camera_Input(request):
@@ -891,13 +917,51 @@ def Camera_Input(request):
 
 @api_view(['POST'])
 def Homework_Input(request):
-    prompt = request.data['prompt']
-    image_urls = json.loads(request.data.get('image_urls', '[]'))
     try:
-        max_tokens = request.data['max_tokens']
-    except:
-        max_tokens = 1000
-
-    print(image_urls)
-
-    return Response({'response': Get_GPT_Response(prompt, image_urls, max_tokens)}, status=HTTP_200_OK)
+        # Extract prompt from request data
+        prompt = request.data['prompt']
+        
+        # Parse image_urls with proper error handling
+        try:
+            image_urls = json.loads(request.data.get('image_urls', '[]'))
+            if not isinstance(image_urls, list):
+                image_urls = []
+        except json.JSONDecodeError:
+            # Handle invalid JSON
+            image_urls = []
+            print("Error: Invalid JSON in image_urls")
+        
+        # Get max_tokens with proper error handling
+        try:
+            max_tokens = int(request.data.get('max_tokens', 1000))
+        except (ValueError, TypeError):
+            max_tokens = 1000
+            
+        # Filter out any invalid URLs
+        valid_image_urls = []
+        for url in image_urls:
+            if isinstance(url, str) and (url.startswith('http') or url.startswith('data:image')):
+                valid_image_urls.append(url)
+            else:
+                print(f"Skipping invalid URL: {url}")
+        
+        print(f"Processing {len(valid_image_urls)} valid image URLs")
+        
+        # Call the GPT response function with validated data
+        response = Get_GPT_Response(prompt, valid_image_urls, max_tokens)
+        return Response({'response': response}, status=HTTP_200_OK)
+    
+    except KeyError as e:
+        # Missing required field
+        return Response({
+            'error': f'Missing required field: {str(e)}',
+            'message': 'Failed to process homework input'
+        }, status=HTTP_400_BAD_REQUEST)
+    
+    except Exception as e:
+        # Catch any other exceptions
+        print(f"Error in Homework_Input: {str(e)}")
+        return Response({
+            'error': str(e),
+            'message': 'An error occurred while processing the homework input'
+        }, status=HTTP_400_BAD_REQUEST)
