@@ -21,7 +21,7 @@ from serpapi import GoogleSearch
 import requests
 import random
 import string
-from datetime import datetime, timedelta
+from datetime import datetime
 # from .firebase_config import storage
 import uuid
 import tempfile
@@ -838,137 +838,29 @@ def Get_Child_Info(request):
         'user_info': user_info}, status=HTTP_200_OK)
 
 def Get_GPT_Response(prompt, image_urls, max_tokens):
-    try:
-        # Build content array starting with text
-        api_key = os.getenv('OPENAI_API_KEY')
-        if not api_key:
-            print("Error: OpenAI API key is missing")
-            return "Sorry, I couldn't process your request due to a configuration issue."
-        
-        client = OpenAI(api_key=api_key, timeout=60.0)  # Increased timeout
-        content = [{"type": "text", "text": prompt}]
+    # Build content array starting with text
+    api_key = os.getenv('OPENAI_API_KEY')
+    client = OpenAI(api_key=api_key)
+    content = [
+        {"type": "input_text", "text": prompt},
+    ]
 
-        # Add each image URL or base64 to the content array
-        for image_url in image_urls:
-            # Check if the image is in base64 format
-            if isinstance(image_url, str):
-                if image_url.startswith('data:image'):
-                    # Handle base64 image
-                    content.append({
-                        "type": "image_url",
-                        "image_url": {
-                            "url": image_url
-                        }
-                    })
-                elif image_url.startswith('http'):
-                    # For Firebase Storage URLs, ensure they're properly formatted
-                    if 'firebasestorage' in image_url:
-                        # Make sure the URL is publicly accessible
-                        try:
-                            # If URL is from Firebase Storage, get the object directly
-                            if 'storage.googleapis.com' in image_url:
-                                # Extract the storage path from the URL
-                                parsed_url = urlparse(image_url)
-                                path = unquote(parsed_url.path)
-                                
-                                # Remove the bucket name prefix from the path
-                                bucket_prefix = f"/storage/v1/b/{os.getenv('FIREBASE_BUCKET')}/o/"
-                                if path.startswith("/"):
-                                    storage_path = path.lstrip("/")
-                                if "companion-app-1b431.firebasestorage.app/" in storage_path:
-                                    storage_path = storage_path.replace("companion-app-1b431.firebasestorage.app/", "")
-                                
-                                # Create a signed URL with a long expiration time (1 hour)
-                                blob = bucket.blob(storage_path)
-                                image_url = blob.generate_signed_url(
-                                    version="v4",
-                                    expiration=datetime.timedelta(hours=1),
-                                    method="GET"
-                                )
-                                print(f"Generated signed URL: {image_url[:100]}...")
-                        except Exception as e:
-                            print(f"Error processing Firebase URL: {str(e)}")
-                            # Continue with the original URL if there's an error
-                    
-                    # Handle regular URL
-                    print(f"Processing image URL: {image_url[:50]}...")
-                    content.append({
-                        "type": "image_url",
-                        "image_url": {
-                            "url": image_url
-                        }
-                    })
-                else:
-                    print(f"Skipping invalid image URL format: {image_url[:30]}...")
-            else:
-                print(f"Skipping non-string image URL: {type(image_url)}")
+    # Add each image URL or base64 to the content array
+    for image_url in image_urls:
+        content.append({"type": "input_image", "image_url": f"{image_url}"})
 
-        if len(content) <= 1:
-            print("Warning: No valid images were provided")
-            
-        # Ensure max_tokens is an integer and has a reasonable value
-        try:
-            max_tokens = int(max_tokens)
-            if max_tokens <= 0 or max_tokens > 4096:
-                max_tokens = 1000
-        except (ValueError, TypeError):
-            max_tokens = 1000
+    response = client.responses.create(
+        model="gpt-4o",
+        max_tokens=max_tokens,
+        input=[
+            {
+                "role": "user",
+                "content": content,
+            }
+        ],
+    )
 
-        print(f"Sending request to OpenAI with {len(content)-1} images")
-        
-        # Try to verify the images are accessible
-        for i, item in enumerate(content):
-            if i > 0:  # Skip the text prompt
-                try:
-                    url = item.get('image_url', {}).get('url', '')
-                    if url.startswith('http'):
-                        # Do a HEAD request to verify the URL is accessible
-                        test_response = requests.head(url, timeout=5)
-                        print(f"Image URL {i} status: {test_response.status_code}")
-                        if test_response.status_code != 200:
-                            print(f"Warning: Image URL {i} returned status {test_response.status_code}")
-                except Exception as e:
-                    print(f"Error checking image URL {i}: {str(e)}")
-        
-        # Make the OpenAI API call
-        try:
-            print("Calling OpenAI API...")
-            response = client.chat.completions.create(
-                model="gpt-4o",
-                messages=[
-                    {
-                        "role": "user",
-                        "content": content
-                    }
-                ],
-                max_tokens=max_tokens
-            )
-            print("OpenAI API call successful")
-            return response.choices[0].message.content
-        except Exception as api_error:
-            print(f"OpenAI API error: {str(api_error)}")
-            # If we have multiple images and get an error, try with just one image
-            if len(content) > 2:  # If we have text + multiple images
-                print("Retrying with only one image...")
-                reduced_content = [content[0], content[1]]  # Just text + first image
-                response = client.chat.completions.create(
-                    model="gpt-4o",
-                    messages=[
-                        {
-                            "role": "user",
-                            "content": reduced_content
-                        }
-                    ],
-                    max_tokens=max_tokens
-                )
-                return response.choices[0].message.content + "\n\n(Note: Only the first image was processed due to an error with multiple images.)"
-            raise  # Re-raise if the fallback also fails
-        
-    except Exception as e:
-        print(f"Error in Get_GPT_Response: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return f"I encountered an error while processing your request. Please try again later. Error details: {str(e)}"
+    return response.output_text
     
 @api_view(['POST'])
 def Camera_Input(request):
@@ -985,89 +877,16 @@ def Camera_Input(request):
 
 @api_view(['POST'])
 def Homework_Input(request):
+    prompt = request.data['prompt']
+    image_urls = request.data['image_urls']
     try:
-        # Extract prompt from request data
-        prompt = request.data['prompt']
-        
-        # Parse image_urls with proper error handling
-        try:
-            raw_image_urls = request.data.get('image_urls', '[]')
-            print(f"Raw image_urls: {raw_image_urls[:100]}...")  # Log first 100 chars
-            
-            image_urls = json.loads(raw_image_urls)
-            if not isinstance(image_urls, list):
-                print(f"image_urls is not a list, it's a {type(image_urls)}")
-                image_urls = []
-        except json.JSONDecodeError as e:
-            # Handle invalid JSON
-            print(f"JSON decode error in image_urls: {str(e)}")
-            image_urls = []
-        
-        # Get max_tokens with proper error handling
-        try:
-            max_tokens = int(request.data.get('max_tokens', 1000))
-        except (ValueError, TypeError):
-            max_tokens = 1000
-            
-        # Validate and fix URLs
-        valid_image_urls = []
-        for i, url in enumerate(image_urls):
-            if not isinstance(url, str):
-                print(f"URL at index {i} is not a string, it's a {type(url)}")
-                continue
-                
-            if url.startswith('http') or url.startswith('data:image'):
-                # Basic URL validation
-                valid_image_urls.append(url)
-                print(f"Valid URL found: {url[:50]}...")  # Log first 50 chars
-            else:
-                print(f"Invalid URL format at index {i}: {url[:50]}...")
-        
-        print(f"Processing {len(valid_image_urls)} valid image URLs")
-        
-        # If we don't have any valid URLs, check if we can extract them from the request
-        if not valid_image_urls and request.FILES:
-            print("No valid URLs in JSON, but found files in request")
-            temp_image_urls = []
-            
-            for file_key, attachment_file in request.FILES.items():
-                # Generate a unique file name
-                file_extension = attachment_file.name.split('.')[-1]
-                unique_filename = f"homework_input/{str(uuid.uuid4())}.{file_extension}"
-                
-                # Upload to Firebase storage
-                blob = bucket.blob(unique_filename)
-                blob.upload_from_file(
-                    attachment_file.file,
-                    content_type=attachment_file.content_type
-                )
-                
-                # Make it public and get URL
-                blob.make_public()
-                image_url = blob.public_url
-                temp_image_urls.append(image_url)
-                print(f"Uploaded file and got URL: {image_url}")
-            
-            valid_image_urls = temp_image_urls
-        
-        # Call the GPT response function with validated data
-        response = Get_GPT_Response(prompt, valid_image_urls, max_tokens)
-        return Response({'response': response}, status=HTTP_200_OK)
-    
-    except KeyError as e:
-        # Missing required field
-        print(f"Missing required field: {str(e)}")
-        return Response({
-            'error': f'Missing required field: {str(e)}',
-            'message': 'Failed to process homework input'
-        }, status=HTTP_400_BAD_REQUEST)
-    
-    except Exception as e:
-        # Catch any other exceptions
-        print(f"Error in Homework_Input: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return Response({
-            'error': str(e),
-            'message': 'An error occurred while processing the homework input'
-        }, status=HTTP_400_BAD_REQUEST)
+        max_tokens = request.data['max_tokens']
+    except:
+        max_tokens = 1000
+
+    if image_urls is None:
+        image_urls = []
+    else:
+        image_urls = json.loads(image_urls)
+
+    return Response({'response': Get_GPT_Response(prompt, image_urls, max_tokens)}, status=HTTP_200_OK)
