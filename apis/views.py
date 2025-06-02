@@ -851,7 +851,6 @@ def Get_GPT_Response(prompt, image_urls, max_tokens):
 
     response = client.responses.create(
         model="gpt-4o",
-        max_tokens=max_tokens,
         input=[
             {
                 "role": "user",
