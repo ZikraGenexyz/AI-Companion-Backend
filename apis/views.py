@@ -921,7 +921,7 @@ def Get_GPT_Response(prompt, image_urls, max_tokens):
         try:
             print(f"Calling OpenAI responses API with {len(content)-1} images...")
             response = client.responses.create(
-                model="gpt-4o",  # You can also try gpt-4o-mini for faster response
+                model="gpt-4o-mini",  # You can also try gpt-4o-mini for faster response
                 input=[
                     {
                         "role": "user",
