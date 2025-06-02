@@ -886,7 +886,7 @@ def Homework_Input(request):
     ]
 
     # Add each image URL or base64 to the content array
-    for image_url in image_urls:
+    for image_url in json.loads(image_urls):
         content.append({"type": "input_image", "image_url": f"{image_url}"})
 
     response = client.responses.create(
