@@ -887,7 +887,12 @@ def Homework_Input(request):
 
     # Add each image URL or base64 to the content array
     for image_url in json.loads(image_urls):
-        content.append({"type": "input_image", "image_url": f"{image_url}"})
+        # Download the image and convert to base64
+        response = requests.get(image_url)
+        image_data = base64.b64encode(response.content).decode('utf-8')
+        base64_image = f"data:image/jpeg;base64,{image_data}"
+        
+        content.append({"type": "input_image", "image_url": base64_image})
 
     response = client.responses.create(
         model="gpt-4o",
