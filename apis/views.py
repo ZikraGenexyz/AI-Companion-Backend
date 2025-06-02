@@ -837,29 +837,123 @@ def Get_Child_Info(request):
         'love_notes': love_note_list, 
         'user_info': user_info}, status=HTTP_200_OK)
 
+# def Get_GPT_Response(prompt, image_urls, max_tokens):
+#     # Build content array starting with text
+#     api_key = os.getenv('OPENAI_API_KEY')
+#     client = OpenAI(api_key=api_key)
+#     content = [
+#         {"type": "input_text", "text": prompt},
+#     ]
+
+#     # Add each image URL or base64 to the content array
+#     for image_url in image_urls:
+#         content.append({"type": "input_image", "image_url": f"{image_url}"})
+
+#     response = client.responses.create(
+#         model="gpt-4o",
+#         input=[
+#             {
+#                 "role": "user",
+#                 "content": content,
+#             }
+#         ],
+#     )
+
+#     return response.output_text
 def Get_GPT_Response(prompt, image_urls, max_tokens):
-    # Build content array starting with text
-    api_key = os.getenv('OPENAI_API_KEY')
-    client = OpenAI(api_key=api_key)
-    content = [
-        {"type": "input_text", "text": prompt},
-    ]
+    try:
+        # Build content array starting with text
+        api_key = os.getenv('OPENAI_API_KEY')
+        if not api_key:
+            print("Error: OpenAI API key is missing")
+            return "Sorry, I couldn't process your request due to a configuration issue."
+        
+        client = OpenAI(api_key=api_key, timeout=120.0)  # Increased timeout significantly
+        
+        # Build content for the newer API format
+        content = [{"type": "input_text", "text": prompt}]
+        
+        # Add each image URL to the content array
+        for image_url in image_urls:
+            # Check if the image is a valid string
+            if isinstance(image_url, str):
+                if image_url.startswith('data:image'):
+                    # Handle base64 image
+                    content.append({
+                        "type": "input_image", 
+                        "image_url": image_url
+                    })
+                elif image_url.startswith('http'):
+                    # Process Firebase Storage URLs
+                    if 'firebasestorage' in image_url:
+                        try:
+                            # Extract the storage path from the URL
+                            if 'storage.googleapis.com' in image_url:
+                                parsed_url = urlparse(image_url)
+                                path = unquote(parsed_url.path)
+                                if path.startswith("/"):
+                                    storage_path = path.lstrip("/")
+                                if "companion-app-1b431.firebasestorage.app/" in storage_path:
+                                    storage_path = storage_path.replace("companion-app-1b431.firebasestorage.app/", "")
+                                
+                                # Generate signed URL
+                                blob = bucket.blob(storage_path)
+                                image_url = blob.generate_signed_url(
+                                    version="v4",
+                                    expiration=timedelta(hours=1),
+                                    method="GET"
+                                )
+                                print(f"Generated signed URL: {image_url[:50]}...")
+                        except Exception as e:
+                            print(f"Error processing Firebase URL: {str(e)}")
+                    
+                    # Add the image URL to the content
+                    content.append({
+                        "type": "input_image",
+                        "image_url": image_url
+                    })
+                else:
+                    print(f"Skipping invalid image URL format: {image_url[:30]}...")
+            else:
+                print(f"Skipping non-string image URL: {type(image_url)}")
 
-    # Add each image URL or base64 to the content array
-    for image_url in image_urls:
-        content.append({"type": "input_image", "image_url": f"{image_url}"})
-
-    response = client.responses.create(
-        model="gpt-4o",
-        input=[
-            {
-                "role": "user",
-                "content": content,
-            }
-        ],
-    )
-
-    return response.output_text
+        # Make the OpenAI API call using the newer responses endpoint
+        try:
+            print(f"Calling OpenAI responses API with {len(content)-1} images...")
+            response = client.responses.create(
+                model="gpt-4o",  # You can also try gpt-4o-mini for faster response
+                input=[
+                    {
+                        "role": "user",
+                        "content": content
+                    }
+                ]
+            )
+            print("OpenAI API call successful")
+            return response.output_text
+        except Exception as api_error:
+            print(f"OpenAI API error: {str(api_error)}")
+            # If we have multiple images and get an error, try with just one image
+            if len(content) > 2:  # If we have text + multiple images
+                print("Retrying with only one image...")
+                reduced_content = [content[0], content[1]]  # Just text + first image
+                response = client.responses.create(
+                    model="gpt-4o-mini",  # Using mini model for fallback (faster)
+                    input=[
+                        {
+                            "role": "user",
+                            "content": reduced_content
+                        }
+                    ]
+                )
+                return response.output_text + "\n\n(Note: Only the first image was processed due to an error with multiple images.)"
+            raise  # Re-raise if the fallback also fails
+        
+    except Exception as e:
+        print(f"Error in Get_GPT_Response: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return f"I encountered an error while processing your request. Please try again later."
     
 @api_view(['POST'])
 def Camera_Input(request):
@@ -878,30 +972,14 @@ def Camera_Input(request):
 def Homework_Input(request):
     prompt = request.data['prompt']
     image_urls = request.data['image_urls']
+    try:
+        max_tokens = request.data['max_tokens']
+    except:
+        max_tokens = 1000
 
-    api_key = os.getenv('OPENAI_API_KEY')
-    client = OpenAI(api_key=api_key)
-    content = [
-        {"type": "input_text", "text": prompt},
-    ]
+    if image_urls is None:
+        image_urls = []
+    else:
+        image_urls = json.loads(image_urls)
 
-    # Add each image URL or base64 to the content array
-    for image_url in json.loads(image_urls):
-        # Download the image and convert to base64
-        response = requests.get(image_url)
-        image_data = base64.b64encode(response.content).decode('utf-8')
-        base64_image = f"data:image/jpeg;base64,{image_data}"
-        
-        content.append({"type": "input_image", "image_url": base64_image})
-
-    response = client.responses.create(
-        model="gpt-4o",
-        input=[
-            {
-                "role": "user",
-                "content": content,
-            }
-        ],
-    )
-
-    return Response({'response': response.output_text}, status=HTTP_200_OK)
+    return Response({'response': Get_GPT_Response(prompt, image_urls, max_tokens)}, status=HTTP_200_OK)
