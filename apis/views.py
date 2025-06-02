@@ -878,14 +878,25 @@ def Camera_Input(request):
 def Homework_Input(request):
     prompt = request.data['prompt']
     image_urls = request.data['image_urls']
-    try:
-        max_tokens = request.data['max_tokens']
-    except:
-        max_tokens = 1000
 
-    if image_urls is None:
-        image_urls = []
-    else:
-        image_urls = json.loads(image_urls)
+    api_key = os.getenv('OPENAI_API_KEY')
+    client = OpenAI(api_key=api_key)
+    content = [
+        {"type": "input_text", "text": prompt},
+    ]
 
-    return Response({'response': Get_GPT_Response(prompt, image_urls, max_tokens)}, status=HTTP_200_OK)
+    # Add each image URL or base64 to the content array
+    for image_url in image_urls:
+        content.append({"type": "input_image", "image_url": f"{image_url}"})
+
+    response = client.responses.create(
+        model="gpt-4o",
+        input=[
+            {
+                "role": "user",
+                "content": content,
+            }
+        ],
+    )
+
+    return Response({'response': response.output_text}, status=HTTP_200_OK)
