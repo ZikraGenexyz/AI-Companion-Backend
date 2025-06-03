@@ -39,6 +39,7 @@ urlpatterns = [
     path('/complete-mission', Complete_Mission, name='complete-mission'),
     path('/edit-mission', Edit_Mission, name='edit-mission'),
     path('/delete-mission', Delete_Mission, name='delete-mission'),
+    path('/check-homework-completion', Check_Homework_Completion, name='check-homework-completion'),
     path('/openai/camera-input', Camera_Input, name='camera-input'),
     path('/openai/homework-input', Homework_Input, name='homework-input'),
 ]
