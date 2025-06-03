@@ -821,7 +821,7 @@ def Delete_Mission(request):
     return Response({'message': 'Mission deleted successfully'}, status=HTTP_200_OK)
 
 @api_view(['POST'])
-def Check_Mission_Completion(request):
+def Check_Homework_Completion(request):
     user_id = request.data['user_id']
     mission_id = request.data['mission_id']
 
