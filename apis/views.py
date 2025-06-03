@@ -871,16 +871,31 @@ def Camera_Input(request):
 
 @api_view(['POST'])
 def Homework_Input(request):
+    user_id = request.data['user_id']
+    mission_id = request.data['mission_id']
     prompt = request.data['prompt']
     image_urls = request.data['image_urls']
-    try:
-        max_tokens = request.data['max_tokens']
-    except:
-        max_tokens = 1000
 
-    if image_urls is None:
-        image_urls = []
+    child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+
+    current_mission = next((mission for mission in child.notification['missions'] if mission['id'] == mission_id), None)
+    
+    if current_mission['gpt_response'] is not None:
+        return Response({'response': current_mission['gpt_response']}, status=HTTP_200_OK)
     else:
-        image_urls = json.loads(image_urls)
+        try:
+            max_tokens = request.data['max_tokens']
+        except:
+            max_tokens = 1000
 
-    return Response({'response': Get_GPT_Response(prompt, image_urls, max_tokens)}, status=HTTP_200_OK)
+        if image_urls is None:
+            image_urls = []
+        else:
+            image_urls = json.loads(image_urls)
+
+        gpt_response = Get_GPT_Response(prompt, image_urls, max_tokens)
+
+        current_mission['gpt_response'] = gpt_response
+        child.save()
+
+        return Response({'response': gpt_response}, status=HTTP_200_OK)
