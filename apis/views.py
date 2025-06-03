@@ -676,6 +676,8 @@ def Complete_Mission(request):
         for mission in child.notification['missions']:
             if mission['id'] == mission_id:
                 mission['completed'] = True
+                mission['gpt_response'] = None
+                mission['confirmation'] = False
                 break
         child.save()
     except:
