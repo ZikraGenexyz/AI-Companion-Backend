@@ -896,7 +896,8 @@ def Homework_Input(request):
 
     current_mission = next((mission for mission in child.notification['missions'] if mission['id'] == mission_id), None)
     
-    if current_mission['gpt_response'] is not None:
+    # If the mission already has a GPT response, return it without calling the API again
+    if current_mission and 'gpt_response' in current_mission and current_mission['gpt_response'] is not None:
         return Response({'response': current_mission['gpt_response']}, status=HTTP_200_OK)
     else:
         try:
@@ -909,9 +910,12 @@ def Homework_Input(request):
         else:
             image_urls = json.loads(image_urls)
 
+        # Using the Get_GPT_Response function defined above
         gpt_response = Get_GPT_Response(prompt, image_urls, max_tokens)
 
-        current_mission['gpt_response'] = gpt_response
-        child.save()
+        # Store the response in the mission to avoid repeated API calls
+        if current_mission:
+            current_mission['gpt_response'] = gpt_response
+            child.save()
 
         return Response({'response': gpt_response}, status=HTTP_200_OK)
