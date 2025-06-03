@@ -611,6 +611,7 @@ def Add_Mission(request):
         'category': mission_type,
         'completed': False,
         'repeat': mission_repeat,
+        'gpt_response': None,
     }
     
     if mission_type == 'Homework':
@@ -759,6 +760,7 @@ def Edit_Mission(request):
     if mission_type == 'Homework':
         new_mission['instructions'] = mission_instructions
         new_mission['confirmation'] = False
+        new_mission['gpt_response'] = None
         
         # Handle all file attachments from request.FILES
         if request.FILES:
