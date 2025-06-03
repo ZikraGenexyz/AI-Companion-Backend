@@ -448,17 +448,12 @@ def Get_Children(request):
     user_list = []
 
     for user in users:
-        gender = None if user.user_info['gender'] == "" else user.user_info['gender']
-        birth_date = None if user.user_info['birth_date'] == "" else user.user_info['birth_date']
-        school = None if user.user_info['school'] == "" else user.user_info['school']
         completed_notes = sum(1 for note in user.notification['love_notes'] if note.get('completed', False))
         completed_missions = sum(1 for mission in user.notification['missions'] if mission.get('completed', False))
 
         user_list.append({
           'id': user.user_id,
-          'name': user.user_info['name'],
-          'avatar': 'lib/assets/images/avatar_icon.png',
-          'energy': user.user_info['energy_level'],
+          'user_info': user.user_info,
           'missions': {'completed': completed_missions, 'total': len(user.notification['missions'])},
           'loveNotes': {'completed': completed_notes, 'total': len(user.notification['love_notes'])},
         })
