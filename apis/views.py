@@ -61,6 +61,8 @@ def Account_Init(request):
 @api_view(['POST'])
 def Child_Init(request):
     username = request.data['username']
+    robot_type = request.data['robot_type']
+    robot_color = request.data['robot_color']
     isActive = True
     user_id = ''.join(random.choices(string.ascii_uppercase + string.digits + string.ascii_lowercase, k=28))
     birth_date = str(datetime.now().year - int(request.data['age'])) + '-01-01'
@@ -71,8 +73,8 @@ def Child_Init(request):
         "birth_date": birth_date,
         "school": "",
         "energy_level": 0,
-        "robot_type": 0,
-        "robot_color": 0,
+        "robot_type": robot_type,
+        "robot_color": robot_color,
     })
 
     return Response({'message': 'Child initialized successfully', 'user_id': user_id}, status=HTTP_200_OK)
