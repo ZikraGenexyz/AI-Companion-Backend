@@ -1,9 +1,9 @@
 # Re-export views from their respective modules
-from .views.account_views import *
-from .views.chat_views import *
-from .views.mission_views import *
-from .views.social_views import *
-from .views.ai_views import *
+# from .api_views.account_views import *
+# from .api_views.chat_views import *
+# from .api_views.mission_views import *
+# from .api_views.social_views import *
+# from .api_views.ai_views import *
 
 # from django.shortcuts import render
 # from companion_app import models
