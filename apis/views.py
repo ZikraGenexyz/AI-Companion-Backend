@@ -72,7 +72,7 @@ def Account_Update(request):
     phone_number = request.data['phone_number']
     relation = request.data['relation']
 
-    models.Parents_Accounts.objects.filter(account_id=account_id).first().update(
+    models.Parents_Accounts.objects.filter(account_id=account_id).update(
         username=username, 
         date_of_birth=date_of_birth, 
         phone_number=phone_number, 
