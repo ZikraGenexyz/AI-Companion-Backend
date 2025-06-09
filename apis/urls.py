@@ -1,9 +1,8 @@
 from django.urls import path
 from .views import account_views, ai_views, chat_views, mission_views, social_views
-from .views import HistoryChat
 
 urlpatterns = [
-    path('chat-history/', HistoryChat.as_view(), name='chat-history'),
+    path('chat-history/', chat_views.HistoryChat.as_view(), name='chat-history'),
     
     # Account APIs
     path('account/init/', account_views.Account_Init, name='account-init'),

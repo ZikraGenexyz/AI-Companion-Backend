@@ -86,7 +86,7 @@ class ParentAccountViews:
 
 class ChildAccountViews:
     @staticmethod
-    @api_view(['POST'])
+    @api_view(['PUT'])
     def child_init(request):
         username = request.data['username']
         robot_type = request.data['robot_type']
@@ -149,9 +149,9 @@ class ChildAccountViews:
         return Response({'message': 'Child deleted successfully'}, status=HTTP_200_OK)
 
     @staticmethod
-    @api_view(['POST'])
+    @api_view(['GET'])
     def child_bind_status(request):
-        user_id = request.data['user_id']
+        user_id = request.GET.get('user_id')
         child = models.Children_Accounts.objects.filter(user_id=user_id).first()
 
         bind_status = False
@@ -162,9 +162,9 @@ class ChildAccountViews:
         return Response({'bind_status': bind_status}, status=HTTP_200_OK)
 
     @staticmethod
-    @api_view(['POST'])
+    @api_view(['GET'])
     def child_get_info(request):
-        user_id = request.data['user_id']
+        user_id = request.GET.get('user_id')
         child = models.Children_Accounts.objects.filter(user_id=user_id).first()
 
         mission_list = child.notification['missions']
@@ -207,7 +207,7 @@ class BindingViews:
             return Response({'message': 'Bind OTP verification failed'}, status=HTTP_400_BAD_REQUEST)
 
     @staticmethod
-    @api_view(['POST'])
+    @api_view(['PUT'])
     def unbind_children_account(request):
         user_id = request.data['user_id']
 
@@ -218,7 +218,7 @@ class BindingViews:
         return Response({'message': 'Account unbound successfully'}, status=HTTP_200_OK)
 
     @staticmethod
-    @api_view(['POST'])
+    @api_view(['PUT'])
     def bind_children_account(request):
         user_id = request.data['user_id']
         account_id = request.data['account_id']

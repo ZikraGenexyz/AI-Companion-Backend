@@ -5,15 +5,6 @@ from .views.mission_views import *
 from .views.social_views import *
 from .views.ai_views import *
 
-# For HistoryChat class
-from .serializers import ChatsSerializer
-from rest_framework import generics
-from companion_app import models
-
-class HistoryChat(generics.ListCreateAPIView):
-    queryset = models.Chat_History.objects.all()
-    serializer_class = ChatsSerializer
-
 # from django.shortcuts import render
 # from companion_app import models
 # from .serializers import ChatsSerializer
