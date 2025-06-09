@@ -1,5 +1,5 @@
 from django.urls import path
-from .api_views import account_views, ai_views, chat_views, mission_views, social_views
+from .api_views import account_views, ai_views, chat_views, mission_views, social_views, love_note_views
 
 urlpatterns = [
     path('chat-history/', chat_views.HistoryChat.as_view(), name='chat-history'),
@@ -38,10 +38,10 @@ urlpatterns = [
     path('mission/check-complete/', mission_views.Mission_Check_Completion, name='mission-check-completion'),
     
     # Love Note APIs
-    path('love-note/add/', mission_views.Love_Note_Add, name='love-note-add'),
-    path('love-note/get/', mission_views.Love_Note_Get, name='love-note-get'),
-    path('love-note/update/', mission_views.Love_Note_Update, name='love-note-update'),
-    path('love-note/delete/', mission_views.Love_Note_Delete, name='love-note-delete'),
+    path('love-note/add/', love_note_views.Love_Note_Add, name='love-note-add'),
+    path('love-note/get/', love_note_views.Love_Note_Get, name='love-note-get'),
+    path('love-note/update/', love_note_views.Love_Note_Update, name='love-note-update'),
+    path('love-note/delete/', love_note_views.Love_Note_Delete, name='love-note-delete'),
     
     # Friend APIs
     path('friend/list/', social_views.Get_Friend_List, name='get-friend-list'),
