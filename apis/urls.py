@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import account_views, ai_views, chat_views, friend_views, mission_views
+from .views import account_views, ai_views, chat_views, mission_views, social_views
 from .views import HistoryChat
 
 urlpatterns = [
@@ -50,13 +50,13 @@ urlpatterns = [
     path('love-note/edit/', mission_views.Edit_Love_Note, name='edit-love-note'),
     
     # Friend APIs
-    path('friend/list/', friend_views.Get_Friend_List, name='get-friend-list'),
-    path('friend/accept/', friend_views.Accept_Friend, name='accept-friend'),
-    path('friend/reject/', friend_views.Reject_Friend, name='reject-friend'),
-    path('friend/remove/', friend_views.Remove_Friend, name='remove-friend'),
-    path('friend/request/', friend_views.Send_Friend_Request, name='send-friend-request'),
-    path('friend/cancel-request/', friend_views.Cancel_Friend_Request, name='cancel-friend-request'),
-    path('friend/search/', friend_views.Search_User, name='search-user'),
+    path('friend/list/', social_views.Get_Friend_List, name='get-friend-list'),
+    path('friend/accept/', social_views.Accept_Friend, name='accept-friend'),
+    path('friend/reject/', social_views.Reject_Friend, name='reject-friend'),
+    path('friend/remove/', social_views.Remove_Friend, name='remove-friend'),
+    path('friend/request/', social_views.Send_Friend_Request, name='send-friend-request'),
+    path('friend/cancel-request/', social_views.Cancel_Friend_Request, name='cancel-friend-request'),
+    path('friend/search/', social_views.Search_User, name='search-user'),
     
     # AI APIs
     path('ai/search/', ai_views.GoogleSearchApi, name='google-search'),

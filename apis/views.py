@@ -1,3 +1,11 @@
+# Re-export views from their respective modules
+from .views.account_views import *
+from .views.chat_views import *
+from .views.mission_views import *
+from .views.social_views import *
+from .views.ai_views import *
+
+
 # from django.shortcuts import render
 # from companion_app import models
 # from .serializers import ChatsSerializer
@@ -49,12 +57,6 @@
 #     queryset = models.Chat_History.objects.all()
 #     serializer_class = ChatsSerializer
 
-# # Re-export views from their respective modules
-# from .views.account_views import *
-# from .views.chat_views import *
-# from .views.mission_views import *
-# from .views.friend_views import *
-# from .views.ai_views import *
 
 # # ------------------------------------------------------------- #
 # #                       Parent Account APIs
