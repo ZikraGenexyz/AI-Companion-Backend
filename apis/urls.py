@@ -21,6 +21,8 @@ urlpatterns = [
     path('/get-account-users', Get_Account_Users, name='get-account-users'),
     path('/account-init', Account_Init, name='account-init'),
     path('/account-update', Account_Update, name='account-update'),
+    path('/account-get-info', Account_Get_Info, name='account-get-info'),
+    path('/account-delete', Account_Delete, name='account-delete'),
     
     # User
     path('/add-user', Add_User, name='add-user'),

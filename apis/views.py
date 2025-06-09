@@ -48,7 +48,7 @@ class HistoryChat(generics.ListCreateAPIView):
     queryset = models.Chat_History.objects.all()
     serializer_class = ChatsSerializer
 
-@api_view(['POST'])
+@api_view(['PUT'])
 def Account_Init(request):
     account_id = request.data['account_id']
     email = request.data['email']
@@ -64,7 +64,7 @@ def Account_Init(request):
 
     return Response({'message': 'Account initialized successfully'}, status=HTTP_200_OK)
 
-@api_view(['POST'])
+@api_view(['PUT'])
 def Account_Update(request):
     account_id = request.data['account_id']
     username = request.data['username']
@@ -79,6 +79,25 @@ def Account_Update(request):
         relation=relation)
 
     return Response({'message': 'Account updated successfully'}, status=HTTP_200_OK)
+
+@api_view(['GET'])
+def Account_Get_Info(request):
+    account_id = request.GET.get('account_id')
+    account = models.Parents_Accounts.objects.filter(account_id=account_id).first()
+
+    return Response({
+        'username': account.username, 
+        'date_of_birth': account.date_of_birth, 
+        'phone_number': account.phone_number, 
+        'relation': account.relation
+    }, status=HTTP_200_OK)
+
+@api_view(['DELETE'])
+def Account_Delete(request):
+    account_id = request.data['account_id']
+    models.Parents_Accounts.objects.filter(account_id=account_id).delete()
+
+    return Response({'message': 'Account deleted successfully'}, status=HTTP_200_OK)
 
 @api_view(['POST'])
 def Child_Init(request):
