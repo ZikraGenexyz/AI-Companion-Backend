@@ -1,69 +1,67 @@
 from django.urls import path
-from .views import *
+from .views import account_views, ai_views, chat_views, friend_views, mission_views
+from .views import HistoryChat
 
 urlpatterns = [
-    # Chats
-    path('/chats', HistoryChat.as_view()),
-    path('/add-chat', AddChat, name='add-chat'),
-    path('/get-chat', GetChat, name='get-chat'),
-    path('/reset-chat', ResetChat, name='reset-chat'),
-
-    # Friends
-    path('/accept-friend', Accept_Friend, name='accept-friend'),
-    path('/reject-friend', Reject_Friend, name='reject-friend'),
-    path('/send-friend-request', Send_Friend_Request, name='send-friend-request'),
-    path('/remove-friend', Remove_Friend, name='remove-friend'),
-    path('/get-friend-list', Get_Friend_List, name='get-friend-list'),
-    path('/search-user', Search_User, name='search-user'),
-    path('/cancel-friend-request', Cancel_Friend_Request, name='cancel-friend-request'),
+    path('chat-history/', HistoryChat.as_view(), name='chat-history'),
     
-    # Account
-    path('/get-account-users', Get_Account_Users, name='get-account-users'),
-    path('/account-init', Account_Init, name='account-init'),
-    path('/account-update', Account_Update, name='account-update'),
-    path('/account-get-info', Account_Get_Info, name='account-get-info'),
-    path('/account-delete', Account_Delete, name='account-delete'),
+    # Account APIs
+    path('account/init/', account_views.Account_Init, name='account-init'),
+    path('account/update/', account_views.Account_Update, name='account-update'),
+    path('account/info/', account_views.Account_Get_Info, name='account-info'),
+    path('account/delete/', account_views.Account_Delete, name='account-delete'),
     
-    # User
-    path('/add-user', Add_User, name='add-user'),
-    path('/remove-user', Remove_User, name='remove-user'),
-    path('/update-user', Update_User, name='update-user'),
+    # Child Account APIs
+    path('child/init/', account_views.Child_Init, name='child-init'),
+    path('child/bind-status/', account_views.Child_Bind_Status, name='child-bind-status'),
+    path('child/edit/', account_views.Edit_Child, name='child-edit'),
+    path('child/info/', account_views.Get_Child_Info, name='child-info'),
+    path('children/', account_views.Get_Children, name='children'),
     
-    # Assistant
-    path('/get-assistant-id', Get_Assistant_ID, name='get-assistant-id'),
+    # User Management APIs
+    path('user/add/', account_views.Add_User, name='add-user'),
+    path('user/remove/', account_views.Remove_User, name='remove-user'),
+    path('user/update/', account_views.Update_User, name='update-user'),
+    path('account/users/', account_views.Get_Account_Users, name='account-users'),
     
-    # Bind
-    path('/create-bind-otp', Create_Bind_OTP, name='create-bind-otp'),
-    path('/verify-bind-otp', Verify_Bind_OTP, name='verify-bind-otp'),
-
-    # Love Note
-    path('/get-love-notes', Get_Love_Notes, name='get-love-notes'),
-    path('/add-love-note', Add_Love_Note, name='add-love-note'),
-    path('/remove-love-note', Remove_Love_Note, name='remove-love-note'),
-    path('/edit-love-note', Edit_Love_Note, name='edit-love-note'),
+    # Binding APIs
+    path('binding/create-otp/', account_views.Create_Bind_OTP, name='create-bind-otp'),
+    path('binding/verify-otp/', account_views.Verify_Bind_OTP, name='verify-bind-otp'),
+    path('binding/unbind/', account_views.Unbind_Children_Account, name='unbind'),
+    path('binding/bind/', account_views.Bind_Children_Account, name='bind'),
     
-    # Child
-    path('/child-init', Child_Init, name='child-init'),
-    path('/get-children', Get_Children, name='get-children'),
-    path('/edit-child', Edit_Child, name='edit-child'),
-    path('/get-child-info', Get_Child_Info, name='get-child-info'),
+    # Chat APIs
+    path('chat/reset/', chat_views.ResetChat, name='reset-chat'),
+    path('chat/get/', chat_views.GetChat, name='get-chat'),
+    path('chat/add/', chat_views.AddChat, name='add-chat'),
     
-    # Child Bind
-    path('/child-bind-status', Child_Bind_Status, name='child-bind-status'),
-    path('/unbind-children-account', Unbind_Children_Account, name='unbind-children-account'),
-    path('/bind-children-account', Bind_Children_Account, name='bind-children-account'),
+    # Mission APIs
+    path('mission/get/', mission_views.Get_Missions, name='get-missions'),
+    path('mission/add/', mission_views.Add_Mission, name='add-mission'),
+    path('mission/complete/', mission_views.Complete_Mission, name='complete-mission'),
+    path('mission/edit/', mission_views.Edit_Mission, name='edit-mission'),
+    path('mission/delete/', mission_views.Delete_Mission, name='delete-mission'),
+    path('mission/check-completion/', mission_views.Check_Homework_Completion, name='check-homework-completion'),
     
-    # Mission
-    path('/get-missions', Get_Missions, name='get-missions'),
-    path('/add-mission', Add_Mission, name='add-mission'),
-    path('/complete-mission', Complete_Mission, name='complete-mission'),
-    path('/edit-mission', Edit_Mission, name='edit-mission'),
-    path('/delete-mission', Delete_Mission, name='delete-mission'),
-    path('/check-homework-completion', Check_Homework_Completion, name='check-homework-completion'),
+    # Love Note APIs
+    path('love-note/get/', mission_views.Get_Love_Notes, name='get-love-notes'),
+    path('love-note/add/', mission_views.Add_Love_Note, name='add-love-note'),
+    path('love-note/remove/', mission_views.Remove_Love_Note, name='remove-love-note'),
+    path('love-note/edit/', mission_views.Edit_Love_Note, name='edit-love-note'),
     
-    # AI
-    path('/google-search', GoogleSearchApi, name='google-search-api'),
-    path('/generate-image', GenerateImage, name='generate-image'),
-    path('/openai/camera-input', Camera_Input, name='camera-input'),
-    path('/openai/homework-input', Homework_Input, name='homework-input'),
+    # Friend APIs
+    path('friend/list/', friend_views.Get_Friend_List, name='get-friend-list'),
+    path('friend/accept/', friend_views.Accept_Friend, name='accept-friend'),
+    path('friend/reject/', friend_views.Reject_Friend, name='reject-friend'),
+    path('friend/remove/', friend_views.Remove_Friend, name='remove-friend'),
+    path('friend/request/', friend_views.Send_Friend_Request, name='send-friend-request'),
+    path('friend/cancel-request/', friend_views.Cancel_Friend_Request, name='cancel-friend-request'),
+    path('friend/search/', friend_views.Search_User, name='search-user'),
+    
+    # AI APIs
+    path('ai/search/', ai_views.GoogleSearchApi, name='google-search'),
+    path('ai/generate-image/', ai_views.GenerateImage, name='generate-image'),
+    path('ai/assistant-id/', ai_views.Get_Assistant_ID, name='get-assistant-id'),
+    path('ai/camera-input/', ai_views.Camera_Input, name='camera-input'),
+    path('ai/homework-input/', ai_views.Homework_Input, name='homework-input'),
 ]
