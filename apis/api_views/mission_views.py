@@ -19,7 +19,7 @@ bucket = client.bucket(os.getenv("FIREBASE_BUCKET"))
 
 class MissionViews:
     @staticmethod
-    @api_view(['PUT'])
+    @api_view(['POST'])
     def mission_add(request):
         user_id = request.data['user_id']
         mission_type = request.data['mission_type']
@@ -89,7 +89,7 @@ class MissionViews:
         return Response({'missions': missions}, status=HTTP_200_OK)
 
     @staticmethod
-    @api_view(['PUT'])
+    @api_view(['POST'])
     def mission_update(request):
         user_id = request.data['user_id']
         mission_id = request.data['mission_id']
@@ -200,7 +200,7 @@ class MissionViews:
         return Response({'message': 'Mission deleted successfully'}, status=HTTP_200_OK)
 
     @staticmethod
-    @api_view(['PUT'])
+    @api_view(['POST'])
     def mission_complete(request):
         try:
             user_id = request.data['user_id']

@@ -4,7 +4,7 @@ from .api_views import account_views, ai_views, chat_views, mission_views, socia
 urlpatterns = [
     path('chat-history/', chat_views.HistoryChat.as_view(), name='chat-history'),
     
-    # Account APIs
+    # Parent Account APIs
     path('account/init/', account_views.Account_Init, name='account-init'),
     path('account/info/', account_views.Account_Get_Info, name='account-info'),
     path('account/update/', account_views.Account_Update, name='account-update'),
@@ -47,8 +47,8 @@ urlpatterns = [
     path('friend/list/', social_views.Get_Friend_List, name='get-friend-list'),
     path('friend/accept/', social_views.Accept_Friend, name='accept-friend'),
     path('friend/reject/', social_views.Reject_Friend, name='reject-friend'),
-    path('friend/remove/', social_views.Remove_Friend, name='remove-friend'),
     path('friend/request/', social_views.Send_Friend_Request, name='send-friend-request'),
+    path('friend/remove/', social_views.Remove_Friend, name='remove-friend'),
     path('friend/cancel-request/', social_views.Cancel_Friend_Request, name='cancel-friend-request'),
     path('friend/search/', social_views.Search_User, name='search-user'),
     
