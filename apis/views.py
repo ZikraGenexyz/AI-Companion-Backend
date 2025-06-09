@@ -53,19 +53,32 @@ def Account_Init(request):
     account_id = request.data['account_id']
     email = request.data['email']
     username = request.data['username']
-    date_of_birth = request.data['date_of_birth']
-    phone_number = request.data['phone_number']
-    relation = request.data['relation']
 
     if models.Parents_Accounts.objects.filter(account_id=account_id).first() is None:
         models.Parents_Accounts.objects.create(account_id=account_id, 
                                                email=email, 
                                                username=username, 
-                                               date_of_birth=date_of_birth, 
-                                               phone_number=phone_number, 
-                                               relation=relation)
+                                               date_of_birth=None, 
+                                               phone_number=None, 
+                                               relation=None)
 
     return Response({'message': 'Account initialized successfully'}, status=HTTP_200_OK)
+
+@api_view(['POST'])
+def Account_Update(request):
+    account_id = request.data['account_id']
+    username = request.data['username']
+    date_of_birth = request.data['date_of_birth']
+    phone_number = request.data['phone_number']
+    relation = request.data['relation']
+
+    models.Parents_Accounts.objects.filter(account_id=account_id).first().update(
+        username=username, 
+        date_of_birth=date_of_birth, 
+        phone_number=phone_number, 
+        relation=relation)
+
+    return Response({'message': 'Account updated successfully'}, status=HTTP_200_OK)
 
 @api_view(['POST'])
 def Child_Init(request):
