@@ -74,9 +74,9 @@ def Account_Update(request):
 
     models.Parents_Accounts.objects.filter(account_id=account_id).update(
         username=username, 
-        date_of_birth=date_of_birth, 
-        phone_number=phone_number, 
-        relation=relation)
+        date_of_birth=date_of_birth if date_of_birth != '' else None, 
+        phone_number=phone_number if phone_number != '' else None, 
+        relation=relation if relation != '' else None)
 
     return Response({'message': 'Account updated successfully'}, status=HTTP_200_OK)
 
