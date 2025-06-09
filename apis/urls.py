@@ -7,22 +7,17 @@ urlpatterns = [
     
     # Account APIs
     path('account/init/', account_views.Account_Init, name='account-init'),
-    path('account/update/', account_views.Account_Update, name='account-update'),
     path('account/info/', account_views.Account_Get_Info, name='account-info'),
+    path('account/update/', account_views.Account_Update, name='account-update'),
     path('account/delete/', account_views.Account_Delete, name='account-delete'),
+    path('account/children/', account_views.Account_Get_Children, name='account-children'),
     
     # Child Account APIs
     path('child/init/', account_views.Child_Init, name='child-init'),
+    path('child/info/', account_views.Child_Get_Info, name='child-info'),
+    path('child/update/', account_views.Child_Update, name='child-update'),
+    path('child/delete/', account_views.Child_Delete, name='child-delete'),
     path('child/bind-status/', account_views.Child_Bind_Status, name='child-bind-status'),
-    path('child/edit/', account_views.Edit_Child, name='child-edit'),
-    path('child/info/', account_views.Get_Child_Info, name='child-info'),
-    path('children/', account_views.Get_Children, name='children'),
-    
-    # User Management APIs
-    path('user/add/', account_views.Add_User, name='add-user'),
-    path('user/remove/', account_views.Remove_User, name='remove-user'),
-    path('user/update/', account_views.Update_User, name='update-user'),
-    path('account/users/', account_views.Get_Account_Users, name='account-users'),
     
     # Binding APIs
     path('binding/create-otp/', account_views.Create_Bind_OTP, name='create-bind-otp'),
@@ -36,18 +31,18 @@ urlpatterns = [
     path('chat/add/', chat_views.AddChat, name='add-chat'),
     
     # Mission APIs
-    path('mission/get/', mission_views.Get_Missions, name='get-missions'),
-    path('mission/add/', mission_views.Add_Mission, name='add-mission'),
-    path('mission/complete/', mission_views.Complete_Mission, name='complete-mission'),
-    path('mission/edit/', mission_views.Edit_Mission, name='edit-mission'),
-    path('mission/delete/', mission_views.Delete_Mission, name='delete-mission'),
-    path('mission/check-completion/', mission_views.Check_Homework_Completion, name='check-homework-completion'),
+    path('mission/add/', mission_views.Mission_Add, name='mission-add'),
+    path('mission/get/', mission_views.Mission_Get, name='mission-get'),
+    path('mission/update/', mission_views.Mission_Update, name='mission-update'),
+    path('mission/delete/', mission_views.Mission_Delete, name='mission-delete'),
+    path('mission/complete/', mission_views.Mission_Complete, name='mission-complete'),
+    path('mission/check-complete/', mission_views.Mission_Check_Completion, name='mission-check-completion'),
     
     # Love Note APIs
-    path('love-note/get/', mission_views.Get_Love_Notes, name='get-love-notes'),
-    path('love-note/add/', mission_views.Add_Love_Note, name='add-love-note'),
-    path('love-note/remove/', mission_views.Remove_Love_Note, name='remove-love-note'),
-    path('love-note/edit/', mission_views.Edit_Love_Note, name='edit-love-note'),
+    path('love-note/add/', mission_views.Love_Note_Add, name='love-note-add'),
+    path('love-note/get/', mission_views.Love_Note_Get, name='love-note-get'),
+    path('love-note/update/', mission_views.Love_Note_Update, name='love-note-update'),
+    path('love-note/delete/', mission_views.Love_Note_Delete, name='love-note-delete'),
     
     # Friend APIs
     path('friend/list/', social_views.Get_Friend_List, name='get-friend-list'),

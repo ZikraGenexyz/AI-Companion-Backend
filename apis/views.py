@@ -5,6 +5,14 @@ from .views.mission_views import *
 from .views.social_views import *
 from .views.ai_views import *
 
+# For HistoryChat class
+from .serializers import ChatsSerializer
+from rest_framework import generics
+from companion_app import models
+
+class HistoryChat(generics.ListCreateAPIView):
+    queryset = models.Chat_History.objects.all()
+    serializer_class = ChatsSerializer
 
 # from django.shortcuts import render
 # from companion_app import models
@@ -52,10 +60,6 @@ from .views.ai_views import *
 # credentials = service_account.Credentials.from_service_account_info(creds_dict)
 # client = storage.Client(credentials=credentials)
 # bucket = client.bucket(os.getenv("FIREBASE_BUCKET"))
-
-# class HistoryChat(generics.ListCreateAPIView):
-#     queryset = models.Chat_History.objects.all()
-#     serializer_class = ChatsSerializer
 
 
 # # ------------------------------------------------------------- #

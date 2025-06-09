@@ -20,7 +20,22 @@ bucket = client.bucket(os.getenv("FIREBASE_BUCKET"))
 class LoveNoteViews:
     @staticmethod
     @api_view(['POST'])
-    def get_love_notes(request):
+    def love_note_add(request):
+        user_id = request.data['user_id']
+        love_note = request.data['love_note']
+
+        child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+        child.notification['love_notes'].append({
+            'note': love_note,
+            'completed': False
+        })
+        child.save()
+
+        return Response({'message': 'Love note added successfully'}, status=HTTP_200_OK)
+    
+    @staticmethod
+    @api_view(['POST'])
+    def love_note_get(request):
         try:
             user_id = request.data['user_id']
             getUncompleted = True if request.data['get_uncompleted'] == 'true' else False
@@ -54,34 +69,7 @@ class LoveNoteViews:
 
     @staticmethod
     @api_view(['POST'])
-    def add_love_note(request):
-        user_id = request.data['user_id']
-        love_note = request.data['love_note']
-
-        child = models.Children_Accounts.objects.filter(user_id=user_id).first()
-        child.notification['love_notes'].append({
-            'note': love_note,
-            'completed': False
-        })
-        child.save()
-
-        return Response({'message': 'Love note added successfully'}, status=HTTP_200_OK)
-
-    @staticmethod
-    @api_view(['POST'])
-    def remove_love_note(request):
-        user_id = request.data['user_id']
-        index = int(request.data['index'])
-
-        child = models.Children_Accounts.objects.filter(user_id=user_id).first()
-        child.notification['love_notes'].pop(index)
-        child.save()
-
-        return Response({'message': 'Love note removed successfully'}, status=HTTP_200_OK)
-
-    @staticmethod
-    @api_view(['POST'])
-    def edit_love_note(request):
+    def love_note_update(request):
         user_id = request.data['user_id']
         index = int(request.data['index'])
         love_note = request.data['love_note']
@@ -92,20 +80,23 @@ class LoveNoteViews:
 
         return Response({'message': 'Love note updated successfully'}, status=HTTP_200_OK)
 
+    @staticmethod
+    @api_view(['POST'])
+    def love_note_delete(request):
+        user_id = request.data['user_id']
+        index = int(request.data['index'])
+
+        child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+        child.notification['love_notes'].pop(index)
+        child.save()
+
+        return Response({'message': 'Love note removed successfully'}, status=HTTP_200_OK)
+
 
 class MissionViews:
     @staticmethod
     @api_view(['POST'])
-    def get_missions(request):
-        user_id = request.data['user_id']
-        child = models.Children_Accounts.objects.filter(user_id=user_id).first()
-        missions = child.notification['missions']
-
-        return Response({'missions': missions}, status=HTTP_200_OK)
-
-    @staticmethod
-    @api_view(['POST'])
-    def add_mission(request):
+    def mission_add(request):
         user_id = request.data['user_id']
         mission_type = request.data['mission_type']
         mission_title = request.data['mission_title']
@@ -163,38 +154,19 @@ class MissionViews:
         child.save()
         
         return Response({'message': 'Mission added successfully'}, status=HTTP_201_CREATED)
+    
+    @staticmethod
+    @api_view(['POST'])
+    def mission_get(request):
+        user_id = request.data['user_id']
+        child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+        missions = child.notification['missions']
+
+        return Response({'missions': missions}, status=HTTP_200_OK)
 
     @staticmethod
     @api_view(['POST'])
-    def complete_mission(request):
-        try:
-            user_id = request.data['user_id']
-            mission_id = request.data['mission_id']
-
-            child = models.Children_Accounts.objects.filter(user_id=user_id).first()
-            for mission in child.notification['missions']:
-                if mission['id'] == mission_id:
-                    mission['completed'] = True
-                    mission['gpt_response'] = None
-                    mission['confirmation'] = False
-                    break
-            child.save()
-        except:
-            user_id = request.data['message']['toolCalls'][0]['function']['arguments']['user_id']
-            mission_id = request.data['message']['toolCalls'][0]['function']['arguments']['mission_id']
-
-            child = models.Children_Accounts.objects.filter(user_id=user_id).first()
-            for mission in child.notification['missions']:
-                if mission['id'] == mission_id:
-                    mission['confirmation'] = True
-                    break
-            child.save()
-        
-        return Response({'message': 'Mission completed successfully'}, status=HTTP_200_OK)
-
-    @staticmethod
-    @api_view(['POST'])
-    def edit_mission(request):
+    def mission_update(request):
         user_id = request.data['user_id']
         mission_id = request.data['mission_id']
         mission_type = request.data['mission_type']
@@ -293,7 +265,7 @@ class MissionViews:
 
     @staticmethod
     @api_view(['POST'])
-    def delete_mission(request):
+    def mission_delete(request):
         user_id = request.data['user_id']
         mission_id = request.data['mission_id']
 
@@ -305,7 +277,35 @@ class MissionViews:
 
     @staticmethod
     @api_view(['POST'])
-    def check_homework_completion(request):
+    def mission_complete(request):
+        try:
+            user_id = request.data['user_id']
+            mission_id = request.data['mission_id']
+
+            child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+            for mission in child.notification['missions']:
+                if mission['id'] == mission_id:
+                    mission['completed'] = True
+                    mission['gpt_response'] = None
+                    mission['confirmation'] = False
+                    break
+            child.save()
+        except:
+            user_id = request.data['message']['toolCalls'][0]['function']['arguments']['user_id']
+            mission_id = request.data['message']['toolCalls'][0]['function']['arguments']['mission_id']
+
+            child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+            for mission in child.notification['missions']:
+                if mission['id'] == mission_id:
+                    mission['confirmation'] = True
+                    break
+            child.save()
+        
+        return Response({'message': 'Mission completed successfully'}, status=HTTP_200_OK)
+
+    @staticmethod
+    @api_view(['POST'])
+    def mission_check_completion(request):
         user_id = request.data['user_id']
         mission_id = request.data['mission_id']
 
@@ -320,14 +320,14 @@ class MissionViews:
 
 
 # Legacy function-based views for backward compatibility
-Get_Love_Notes = LoveNoteViews.get_love_notes
-Add_Love_Note = LoveNoteViews.add_love_note
-Remove_Love_Note = LoveNoteViews.remove_love_note
-Edit_Love_Note = LoveNoteViews.edit_love_note
+Love_Note_Add = LoveNoteViews.love_note_add
+Love_Note_Get = LoveNoteViews.love_note_get
+Love_Note_Update = LoveNoteViews.love_note_update
+Love_Note_Delete = LoveNoteViews.love_note_delete
 
-Get_Missions = MissionViews.get_missions
-Add_Mission = MissionViews.add_mission
-Complete_Mission = MissionViews.complete_mission
-Edit_Mission = MissionViews.edit_mission
-Delete_Mission = MissionViews.delete_mission
-Check_Homework_Completion = MissionViews.check_homework_completion 
+Mission_Add = MissionViews.mission_add
+Mission_Get = MissionViews.mission_get
+Mission_Update = MissionViews.mission_update
+Mission_Delete = MissionViews.mission_delete
+Mission_Complete = MissionViews.mission_complete
+Mission_Check_Completion = MissionViews.mission_check_completion 

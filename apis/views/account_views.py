@@ -63,22 +63,25 @@ class ParentAccountViews:
         models.Parents_Accounts.objects.filter(account_id=account_id).delete()
 
         return Response({'message': 'Account deleted successfully'}, status=HTTP_200_OK)
-
+    
     @staticmethod
-    @api_view(['POST'])
-    def get_account_users(request):
-        account_id = request.data['account_id']
-        users = models.Children_Accounts.objects.filter(account=models.Parents_Accounts.objects.filter(account_id=account_id).first())
-
+    @api_view(['GET'])
+    def account_get_children(request):
+        users = models.Children_Accounts.objects.filter(account=models.Parents_Accounts.objects.filter(account_id=request.GET.get('account_id')).first())
         user_list = []
 
         for user in users:
+            completed_notes = sum(1 for note in user.notification['love_notes'] if note.get('completed', False))
+            completed_missions = sum(1 for mission in user.notification['missions'] if mission.get('completed', False))
+
             user_list.append({
-                'id': user.user_id,
-                'name': user.username
+            'id': user.user_id,
+            'user_info': user.user_info,
+            'missions': {'completed': completed_missions, 'total': len(user.notification['missions'])},
+            'loveNotes': {'completed': completed_notes, 'total': len(user.notification['love_notes'])},
             })
 
-        return Response({"users": user_list}, status=HTTP_200_OK)
+        return Response({'children': user_list}, status=HTTP_200_OK)
 
 
 class ChildAccountViews:
@@ -105,40 +108,8 @@ class ChildAccountViews:
         return Response({'message': 'Child initialized successfully', 'user_id': user_id}, status=HTTP_200_OK)
 
     @staticmethod
-    @api_view(['POST'])
-    def child_bind_status(request):
-        user_id = request.data['user_id']
-        child = models.Children_Accounts.objects.filter(user_id=user_id).first()
-
-        bind_status = False
-
-        if child.account is not None:
-            bind_status = True
-
-        return Response({'bind_status': bind_status}, status=HTTP_200_OK)
-
-    @staticmethod
-    @api_view(['POST'])
-    def get_children(request):
-        users = models.Children_Accounts.objects.filter(account=models.Parents_Accounts.objects.filter(account_id=request.data['account_id']).first())
-        user_list = []
-
-        for user in users:
-            completed_notes = sum(1 for note in user.notification['love_notes'] if note.get('completed', False))
-            completed_missions = sum(1 for mission in user.notification['missions'] if mission.get('completed', False))
-
-            user_list.append({
-            'id': user.user_id,
-            'user_info': user.user_info,
-            'missions': {'completed': completed_missions, 'total': len(user.notification['missions'])},
-            'loveNotes': {'completed': completed_notes, 'total': len(user.notification['love_notes'])},
-            })
-
-        return Response({'children': user_list}, status=HTTP_200_OK)
-
-    @staticmethod
-    @api_view(['POST'])
-    def edit_child(request):
+    @api_view(['PUT'])
+    def child_update(request):
         user_id = request.data['user_id']
         username = request.data['username']
         gender = request.data['gender']
@@ -170,8 +141,29 @@ class ChildAccountViews:
         return Response({'message': 'Child updated successfully'}, status=HTTP_200_OK)
 
     @staticmethod
+    @api_view(['DELETE'])
+    def child_delete(request):
+        user_id = request.data['user_id']
+        models.Children_Accounts.objects.filter(user_id=user_id).delete()
+
+        return Response({'message': 'Child deleted successfully'}, status=HTTP_200_OK)
+
+    @staticmethod
     @api_view(['POST'])
-    def get_child_info(request):
+    def child_bind_status(request):
+        user_id = request.data['user_id']
+        child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+
+        bind_status = False
+
+        if child.account is not None:
+            bind_status = True
+
+        return Response({'bind_status': bind_status}, status=HTTP_200_OK)
+
+    @staticmethod
+    @api_view(['POST'])
+    def child_get_info(request):
         user_id = request.data['user_id']
         child = models.Children_Accounts.objects.filter(user_id=user_id).first()
 
@@ -183,39 +175,7 @@ class ChildAccountViews:
             'missions': mission_list, 
             'love_notes': love_note_list, 
             'user_info': user_info}, status=HTTP_200_OK)
-
-    @staticmethod
-    @api_view(['POST'])
-    def add_user(request):
-        account_id = request.data['account_id']
-        username = request.data['username']
-        user_id = ''.join(random.choices(string.ascii_uppercase + string.digits + string.ascii_lowercase, k=28))
-
-        models.Children_Accounts.objects.create(account=models.Parents_Accounts.objects.filter(account_id=account_id).first(), user_id=user_id, username=username)
-
-        return Response({'message': 'User initialized successfully', 'user_id': user_id}, status=HTTP_200_OK)
-
-    @staticmethod
-    @api_view(['DELETE'])
-    def remove_user(request):
-        user_id = request.data['user_id']
-        models.Children_Accounts.objects.filter(user_id=user_id).delete()
-
-        return Response({'message': 'User removed successfully'}, status=HTTP_200_OK)
-
-    @staticmethod
-    @api_view(['PUT'])
-    def update_user(request):
-        user_id = request.data['user_id']
-        username = request.data['username']
-
-        user = models.Children_Accounts.objects.filter(user_id=user_id).first()
-        user.username = username
-        user.save()
-
-        return Response({'message': 'User updated successfully'}, status=HTTP_200_OK)
-
-
+    
 class BindingViews:
     @staticmethod
     @api_view(['POST'])
@@ -272,19 +232,16 @@ class BindingViews:
 
 # Legacy function-based views for backward compatibility
 Account_Init = ParentAccountViews.account_init
-Account_Update = ParentAccountViews.account_update
 Account_Get_Info = ParentAccountViews.account_get_info
+Account_Update = ParentAccountViews.account_update
 Account_Delete = ParentAccountViews.account_delete
-Get_Account_Users = ParentAccountViews.get_account_users
+Account_Get_Children = ParentAccountViews.account_get_children
 
 Child_Init = ChildAccountViews.child_init
+Child_Get_Info = ChildAccountViews.child_get_info
+Child_Update = ChildAccountViews.child_update
+Child_Delete = ChildAccountViews.child_delete
 Child_Bind_Status = ChildAccountViews.child_bind_status
-Get_Children = ChildAccountViews.get_children
-Edit_Child = ChildAccountViews.edit_child
-Get_Child_Info = ChildAccountViews.get_child_info
-Add_User = ChildAccountViews.add_user
-Remove_User = ChildAccountViews.remove_user
-Update_User = ChildAccountViews.update_user
 
 Create_Bind_OTP = BindingViews.create_bind_otp
 Verify_Bind_OTP = BindingViews.verify_bind_otp
