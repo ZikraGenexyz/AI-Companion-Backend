@@ -60,6 +60,12 @@ class ParentAccountViews:
     @api_view(['DELETE'])
     def account_delete(request):
         account_id = request.data['account_id']
+
+        children = models.Children_Accounts.objects.filter(account=models.Parents_Accounts.objects.filter(account_id=account_id).first())
+        for child in children:
+            child.account = None
+            child.save()
+
         models.Parents_Accounts.objects.filter(account_id=account_id).delete()
 
         return Response({'message': 'Account deleted successfully'}, status=HTTP_200_OK)
@@ -92,7 +98,12 @@ class ChildAccountViews:
         robot_type = request.data['robot_type']
         robot_color = request.data['robot_color']
         isActive = True
-        user_id = ''.join(random.choices(string.ascii_uppercase + string.digits + string.ascii_lowercase, k=28))
+        
+        while True:
+            user_id = ''.join(random.choices(string.ascii_uppercase + string.digits + string.ascii_lowercase, k=28))
+            if models.Children_Accounts.objects.filter(user_id=user_id).first() is None:
+                break
+        
         birth_date = str(datetime.now().year - int(request.data['age'])) + '-01-01'
 
         models.Children_Accounts.objects.create(account=None, user_id=user_id, isActive=isActive, user_info={
@@ -144,7 +155,11 @@ class ChildAccountViews:
     @api_view(['DELETE'])
     def child_delete(request):
         user_id = request.data['user_id']
-        models.Children_Accounts.objects.filter(user_id=user_id).delete()
+        
+        child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+        child.account = None
+        child.save()
+        child.delete()
 
         return Response({'message': 'Child deleted successfully'}, status=HTTP_200_OK)
 
