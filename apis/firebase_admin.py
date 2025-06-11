@@ -1,14 +1,39 @@
 import firebase_admin
 from firebase_admin import credentials, messaging
 import os
+import json
+import base64
 from pathlib import Path
 from django.conf import settings
 
-# Initialize Firebase Admin with service account key
-cred_path = os.path.join(settings.BASE_DIR, 'companion-app-1b431-firebase-adminsdk-fbsvc-885c1c1f19.json')
+# Function to get Firebase credentials either from file or environment variable
+def get_firebase_credentials():
+    # First check if FIREBASE_CREDENTIALS env var exists (for Vercel)
+    firebase_credentials = os.environ.get('FIREBASE_CREDENTIALS')
+    if firebase_credentials:
+        try:
+            # First attempt to parse it directly as JSON
+            try:
+                cred_dict = json.loads(firebase_credentials)
+                return credentials.Certificate(cred_dict)
+            except json.JSONDecodeError:
+                # If direct JSON parsing fails, try base64 decoding
+                credentials_json = base64.b64decode(firebase_credentials).decode('utf-8')
+                return credentials.Certificate(json.loads(credentials_json))
+        except Exception as e:
+            print(f"Error loading credentials from environment variable: {e}")
+    
+    # Fallback to file-based credentials (for local development)
+    cred_path = os.path.join(settings.BASE_DIR, 'companion-app-1b431-firebase-adminsdk-fbsvc-885c1c1f19.json')
+    if os.path.exists(cred_path):
+        return credentials.Certificate(cred_path)
+    
+    # If no credentials are found, raise an error
+    raise FileNotFoundError("Firebase credentials not found. Please set FIREBASE_CREDENTIALS environment variable or provide the JSON file.")
 
+# Initialize Firebase Admin with service account
 if not firebase_admin._apps:
-    cred = credentials.Certificate(cred_path)
+    cred = get_firebase_credentials()
     firebase_admin.initialize_app(cred)
 
 def send_push_notification(token, title, body, data=None):
