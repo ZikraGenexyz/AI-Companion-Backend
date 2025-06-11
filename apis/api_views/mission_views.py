@@ -3,6 +3,8 @@ from companion_app import models
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_201_CREATED
 from rest_framework.decorators import api_view
+from apis.firebase_admin import send_multicast_notification, send_push_notification
+from companion_app.models import DeviceToken
 import random
 import string
 import json
@@ -76,6 +78,36 @@ class MissionViews:
         child = models.Children_Accounts.objects.filter(user_id=user_id).first()
         child.notification['missions'].append(mission_data)
         child.save()
+
+        tokens = DeviceToken.objects.filter(
+            user_id=user_id, 
+            is_active=True
+        ).values_list('device_token', flat=True)
+
+           
+        if tokens:
+            tokens_list = list(tokens)
+            if len(tokens_list) == 1:
+                send_push_notification(
+                    token=tokens_list[0],
+                    title="New Mission",
+                    body=f"You have a new mission: {mission_title}",
+                    data={
+                        "type": "mission",
+                        "mission_id": mission_id
+                    }
+                )
+                 
+            else:
+                send_multicast_notification(
+                    tokens=tokens_list,
+                    title="New Mission",
+                    body=f"You have a new mission: {mission_title}",
+                    data={
+                        "type": "mission",  
+                        "mission_id": mission_id
+                    }
+                )
         
         return Response({'message': 'Mission added successfully'}, status=HTTP_201_CREATED)
     

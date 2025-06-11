@@ -41,3 +41,15 @@ class Chat_History(models.Model):
     text = models.TextField(max_length=1000)
     isUser = models.BooleanField(default=False)
     date = models.DateTimeField(auto_now_add=True)
+
+class DeviceToken(models.Model):
+    id = models.AutoField(primary_key=True)
+    user_id = models.CharField(max_length=100)  # This can be parent or child user_id
+    device_token = models.CharField(max_length=255, unique=True)
+    device_type = models.CharField(max_length=10, choices=[('android', 'Android'), ('ios', 'iOS')], default='android')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ('user_id', 'device_token')

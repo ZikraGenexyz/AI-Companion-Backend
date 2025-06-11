@@ -985,3 +985,128 @@
 #             child.save()
 
 #         return Response({'response': gpt_response}, status=HTTP_200_OK)
+
+# FCM Notification Views
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework import status
+from companion_app.models import DeviceToken
+from apis.serializers import DeviceTokenSerializer
+from apis.firebase_admin import send_push_notification, send_multicast_notification
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register_device(request):
+    """
+    Register device token for FCM notifications
+    """
+    serializer = DeviceTokenSerializer(data=request.data)
+    if serializer.is_valid():
+        user_id = serializer.validated_data['user_id']
+        device_token = serializer.validated_data['device_token']
+        device_type = serializer.validated_data.get('device_type', 'android')
+        
+        # Check if the token already exists for this user
+        existing_token = DeviceToken.objects.filter(user_id=user_id, device_token=device_token).first()
+        if existing_token:
+            # Update existing token if it exists
+            existing_token.device_type = device_type
+            existing_token.is_active = True
+            existing_token.save()
+            return Response({
+                'status': 'success',
+                'message': 'Device token updated successfully',
+                'data': DeviceTokenSerializer(existing_token).data
+            }, status=status.HTTP_200_OK)
+        
+        # Create new token
+        token_obj = serializer.save()
+        return Response({
+            'status': 'success',
+            'message': 'Device token registered successfully',
+            'data': DeviceTokenSerializer(token_obj).data
+        }, status=status.HTTP_201_CREATED)
+    
+    return Response({
+        'status': 'error',
+        'message': 'Invalid data',
+        'errors': serializer.errors
+    }, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def unregister_device(request):
+    """
+    Unregister device token
+    """
+    user_id = request.data.get('user_id')
+    device_token = request.data.get('device_token')
+    
+    if not user_id or not device_token:
+        return Response({
+            'status': 'error',
+            'message': 'user_id and device_token are required'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        token_obj = DeviceToken.objects.get(user_id=user_id, device_token=device_token)
+        token_obj.is_active = False
+        token_obj.save()
+        return Response({
+            'status': 'success',
+            'message': 'Device token unregistered successfully'
+        }, status=status.HTTP_200_OK)
+    except DeviceToken.DoesNotExist:
+        return Response({
+            'status': 'error',
+            'message': 'Device token not found'
+        }, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def send_notification(request):
+    """
+    Send notification to a specific user
+    """
+    user_id = request.data.get('user_id')
+    title = request.data.get('title')
+    body = request.data.get('body')
+    data = request.data.get('data', {})
+    
+    if not user_id or not title or not body:
+        return Response({
+            'status': 'error',
+            'message': 'user_id, title, and body are required'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Get all active device tokens for the user
+    tokens = DeviceToken.objects.filter(user_id=user_id, is_active=True).values_list('device_token', flat=True)
+    
+    if not tokens:
+        return Response({
+            'status': 'error',
+            'message': 'No active device tokens found for this user'
+        }, status=status.HTTP_404_NOT_FOUND)
+    
+    # Convert tokens to a list
+    tokens_list = list(tokens)
+    
+    # Send notifications
+    if len(tokens_list) == 1:
+        result = send_push_notification(tokens_list[0], title, body, data)
+    else:
+        result = send_multicast_notification(tokens_list, title, body, data)
+    
+    if result.get('success'):
+        return Response({
+            'status': 'success',
+            'message': 'Notification sent successfully',
+            'data': result
+        }, status=status.HTTP_200_OK)
+    else:
+        return Response({
+            'status': 'error',
+            'message': 'Failed to send notification',
+            'error': result.get('error')
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

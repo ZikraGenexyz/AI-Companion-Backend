@@ -1,5 +1,6 @@
 from django.urls import path
 from .api_views import account_views, ai_views, chat_views, mission_views, social_views, love_note_views
+from .views import register_device, unregister_device, send_notification
 
 urlpatterns = [
     path('chat-history/', chat_views.HistoryChat.as_view(), name='chat-history'),
@@ -58,4 +59,9 @@ urlpatterns = [
     path('ai/assistant-id/', ai_views.Get_Assistant_ID, name='get-assistant-id'),
     path('ai/camera-input/', ai_views.Camera_Input, name='camera-input'),
     path('ai/homework-input/', ai_views.Homework_Input, name='homework-input'),
+    
+    # FCM Notification APIs
+    path('notification/register-device/', register_device, name='register-device'),
+    path('notification/unregister-device/', unregister_device, name='unregister-device'),
+    path('notification/send/', send_notification, name='send-notification'),
 ]

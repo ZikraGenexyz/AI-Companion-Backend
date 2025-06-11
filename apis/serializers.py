@@ -25,3 +25,9 @@ class ChatsSerializer(serializers.ModelSerializer):
 #         user = User.objects.create_user(**validated_data)
 #         user.save()
 #         return user
+
+class DeviceTokenSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.DeviceToken
+        fields = ['id', 'user_id', 'device_token', 'device_type', 'is_active']
+        read_only_fields = ['id', 'created_at', 'updated_at']
