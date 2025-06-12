@@ -993,7 +993,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from companion_app.models import DeviceToken
 from apis.serializers import DeviceTokenSerializer
-from apis.firebase_admin import send_push_notification, send_multicast_notification
+from apis.firebase_admin import send_push_notification, send_multicast_notification, subscribe_to_topic, unsubscribe_from_topic, send_topic_notification
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -1108,5 +1108,149 @@ def send_notification(request):
         return Response({
             'status': 'error',
             'message': 'Failed to send notification',
+            'error': result.get('error')
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def subscribe_device_to_topic(request):
+    """
+    Subscribe device tokens to a specific topic
+    """
+    topic = request.data.get('topic')
+    user_id = request.data.get('user_id')
+    device_tokens = request.data.get('device_tokens')
+    
+    if not topic:
+        return Response({
+            'status': 'error',
+            'message': 'topic is required'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Validate topic name (FCM has restrictions on topic names)
+    if not topic.isalnum() and not all(c in '-_.~%+' for c in topic if not c.isalnum()):
+        return Response({
+            'status': 'error',
+            'message': 'Invalid topic name. Use only letters, numbers, and -_.~%+'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    tokens_list = []
+    
+    # If user_id is provided, get all tokens for that user
+    if user_id:
+        tokens = DeviceToken.objects.filter(user_id=user_id, is_active=True).values_list('device_token', flat=True)
+        tokens_list.extend(list(tokens))
+    
+    # If specific device_tokens are provided, add them too
+    if device_tokens and isinstance(device_tokens, list):
+        tokens_list.extend(device_tokens)
+    
+    # Remove duplicates
+    tokens_list = list(set(tokens_list))
+    
+    if not tokens_list:
+        return Response({
+            'status': 'error',
+            'message': 'No device tokens found'
+        }, status=status.HTTP_404_NOT_FOUND)
+    
+    # Subscribe tokens to topic
+    result = subscribe_to_topic(tokens_list, topic)
+    
+    if result.get('success'):
+        return Response({
+            'status': 'success',
+            'message': f'Devices subscribed to topic {topic} successfully',
+            'data': result
+        }, status=status.HTTP_200_OK)
+    else:
+        return Response({
+            'status': 'error',
+            'message': 'Failed to subscribe devices to topic',
+            'error': result.get('error')
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def unsubscribe_device_from_topic(request):
+    """
+    Unsubscribe device tokens from a specific topic
+    """
+    topic = request.data.get('topic')
+    user_id = request.data.get('user_id')
+    device_tokens = request.data.get('device_tokens')
+    
+    if not topic:
+        return Response({
+            'status': 'error',
+            'message': 'topic is required'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    tokens_list = []
+    
+    # If user_id is provided, get all tokens for that user
+    if user_id:
+        tokens = DeviceToken.objects.filter(user_id=user_id, is_active=True).values_list('device_token', flat=True)
+        tokens_list.extend(list(tokens))
+    
+    # If specific device_tokens are provided, add them too
+    if device_tokens and isinstance(device_tokens, list):
+        tokens_list.extend(device_tokens)
+    
+    # Remove duplicates
+    tokens_list = list(set(tokens_list))
+    
+    if not tokens_list:
+        return Response({
+            'status': 'error',
+            'message': 'No device tokens found'
+        }, status=status.HTTP_404_NOT_FOUND)
+    
+    # Unsubscribe tokens from topic
+    result = unsubscribe_from_topic(tokens_list, topic)
+    
+    if result.get('success'):
+        return Response({
+            'status': 'success',
+            'message': f'Devices unsubscribed from topic {topic} successfully',
+            'data': result
+        }, status=status.HTTP_200_OK)
+    else:
+        return Response({
+            'status': 'error',
+            'message': 'Failed to unsubscribe devices from topic',
+            'error': result.get('error')
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def send_topic_message(request):
+    """
+    Send notification to all devices subscribed to a specific topic
+    """
+    topic = request.data.get('topic')
+    title = request.data.get('title')
+    body = request.data.get('body')
+    data = request.data.get('data', {})
+    
+    if not topic or not title or not body:
+        return Response({
+            'status': 'error',
+            'message': 'topic, title, and body are required'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Send notification to topic
+    result = send_topic_notification(topic, title, body, data)
+    
+    if result.get('success'):
+        return Response({
+            'status': 'success',
+            'message': f'Notification sent to topic {topic} successfully',
+            'data': result
+        }, status=status.HTTP_200_OK)
+    else:
+        return Response({
+            'status': 'error',
+            'message': 'Failed to send notification to topic',
             'error': result.get('error')
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

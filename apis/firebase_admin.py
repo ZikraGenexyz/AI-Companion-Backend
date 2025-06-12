@@ -108,3 +108,89 @@ def send_multicast_notification(tokens, title, body, data=None):
             "success": False,
             "error": str(e)
         }
+
+def subscribe_to_topic(tokens, topic):
+    """
+    Subscribe device tokens to a specific topic
+    
+    Args:
+        tokens (list): List of FCM device tokens
+        topic (str): Topic name to subscribe to
+    
+    Returns:
+        dict: Response from FCM
+    """
+    try:
+        # Subscribe tokens to topic
+        response = messaging.subscribe_to_topic(tokens, topic)
+        return {
+            "success": True,
+            "success_count": response.success_count,
+            "failure_count": response.failure_count,
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+def unsubscribe_from_topic(tokens, topic):
+    """
+    Unsubscribe device tokens from a specific topic
+    
+    Args:
+        tokens (list): List of FCM device tokens
+        topic (str): Topic name to unsubscribe from
+    
+    Returns:
+        dict: Response from FCM
+    """
+    try:
+        # Unsubscribe tokens from topic
+        response = messaging.unsubscribe_from_topic(tokens, topic)
+        return {
+            "success": True,
+            "success_count": response.success_count,
+            "failure_count": response.failure_count,
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+def send_topic_notification(topic, title, body, data=None):
+    """
+    Send push notification to a specific topic
+    
+    Args:
+        topic (str): Topic name to send notification to
+        title (str): Notification title
+        body (str): Notification body
+        data (dict, optional): Additional data to send. Defaults to None.
+    
+    Returns:
+        dict: Response from FCM
+    """
+    try:
+        # Create message
+        message = messaging.Message(
+            notification=messaging.Notification(
+                title=title,
+                body=body,
+            ),
+            data=data or {},
+            topic=topic,
+        )
+        
+        # Send message
+        response = messaging.send(message)
+        return {
+            "success": True,
+            "message_id": response
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }

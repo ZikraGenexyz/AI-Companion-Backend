@@ -1,6 +1,6 @@
 from django.urls import path
 from .api_views import account_views, ai_views, chat_views, mission_views, social_views, love_note_views
-from .views import register_device, unregister_device, send_notification
+from .views import register_device, unregister_device, send_notification, subscribe_device_to_topic, unsubscribe_device_from_topic, send_topic_message
 
 urlpatterns = [
     path('chat-history/', chat_views.HistoryChat.as_view(), name='chat-history'),
@@ -64,4 +64,9 @@ urlpatterns = [
     path('notification/register-device/', register_device, name='register-device'),
     path('notification/unregister-device/', unregister_device, name='unregister-device'),
     path('notification/send/', send_notification, name='send-notification'),
+    
+    # Topic-based Notification APIs
+    path('notification/topic/subscribe/', subscribe_device_to_topic, name='subscribe-to-topic'),
+    path('notification/topic/unsubscribe/', unsubscribe_device_from_topic, name='unsubscribe-from-topic'),
+    path('notification/topic/send/', send_topic_message, name='send-topic-notification'),
 ]

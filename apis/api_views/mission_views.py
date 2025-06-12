@@ -3,7 +3,7 @@ from companion_app import models
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_201_CREATED
 from rest_framework.decorators import api_view
-from apis.firebase_admin import send_multicast_notification, send_push_notification
+from apis.firebase_admin import send_multicast_notification, send_push_notification, send_topic_notification
 from companion_app.models import DeviceToken
 import random
 import string
@@ -79,35 +79,20 @@ class MissionViews:
         child.notification['missions'].append(mission_data)
         child.save()
 
-        tokens = DeviceToken.objects.filter(
-            user_id=user_id, 
-            is_active=True
-        ).values_list('device_token', flat=True)
-
-           
-        if tokens:
-            tokens_list = list(tokens)
-            if len(tokens_list) == 1:
-                send_push_notification(
-                    token=tokens_list[0],
-                    title="New Mission",
-                    body=f"You have a new mission: {mission_title}",
-                    data={
-                        "type": "mission",
-                        "mission_id": mission_id
-                    }
-                )
-                 
-            else:
-                send_multicast_notification(
-                    tokens=tokens_list,
-                    title="New Mission",
-                    body=f"You have a new mission: {mission_title}",
-                    data={
-                        "type": "mission",  
-                        "mission_id": mission_id
-                    }
-                )
+        send_topic_notification(
+            topic=user_id,
+            title="New Mission Assigned",
+            body=f"A new mission '{mission_title}' has been assigned",
+            data={
+                "type": "mission",
+                "action": "created",
+                "mission_id": mission_id,
+                "user_id": user_id,
+                "mission_title": mission_title,
+                "mission_type": mission_type,
+                "due_date": mission_due_date
+            }
+        )
         
         return Response({'message': 'Mission added successfully'}, status=HTTP_201_CREATED)
     
