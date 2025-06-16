@@ -324,3 +324,4 @@ Mission_Delete = MissionViews.mission_delete
 Mission_Complete = MissionViews.mission_complete
 Mission_Check_Completion = MissionViews.mission_check_completion 
 Mission_Add_Result = MissionViews.mission_add_result
+Mission_Claim = MissionViews.mission_claim
