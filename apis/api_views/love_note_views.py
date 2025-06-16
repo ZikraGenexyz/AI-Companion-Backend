@@ -44,23 +44,18 @@ class LoveNoteViews:
             getUncompleted = True
 
         child = models.Children_Accounts.objects.filter(user_id=user_id).first()
-        love_notes = child.notification['love_notes']
+        uncompleted_love_notes = [note for note in child.notification['love_notes'] if not note['completed']]
 
         if getUncompleted:
-            notes = f'There is {len(love_notes)} love notes for you. \n'
-            uncompleted_notes_indices = []
+            notes = f'There is {len(uncompleted_love_notes)} love notes for you. \n'
             
-            for i, note in enumerate(love_notes):
-                if not note['completed']:
-                    notes += f'{note["note"]}, \n'
-                    uncompleted_notes_indices.append(i)
-                    
-                    # Mark the note as completed
-                    love_notes[i]['completed'] = True
+            for i, note in enumerate(uncompleted_love_notes):
+                notes += f'{note['note']}, \n'
+                
+                # Mark the note as completed
+                child.notification['love_notes'][i]['completed'] = True
             
-            # Save the changes to the database if any notes were marked as completed
-            if uncompleted_notes_indices:
-                child.save()
+            child.save()
                 
             notes = notes.rstrip(', \n')
             return Response({"results":[{"result": notes, "toolCallId": request.data['message']['toolCalls'][0]['id']}]}, status=HTTP_200_OK)
