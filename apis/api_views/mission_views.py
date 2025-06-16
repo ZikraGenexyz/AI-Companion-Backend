@@ -82,17 +82,8 @@ class MissionViews:
 
         send_topic_notification(
             topic=user_id,
-            title="New Mission Assigned",
+            title="You got new mission!",
             body=f"A new mission '{mission_title}' has been assigned",
-            data={
-                "type": "mission",
-                "action": "created",
-                "mission_id": mission_id,
-                "user_id": user_id,
-                "mission_title": mission_title,
-                "mission_type": mission_type,
-                "due_date": mission_due_date
-            }
         )
         
         return Response({'message': 'Mission added successfully'}, status=HTTP_201_CREATED)
@@ -231,11 +222,17 @@ class MissionViews:
                     mission['completed'] = True
                     mission['gpt_response'] = None
                     mission['confirmation'] = False
-                    
+
                     if mission['category'] == 'Homework':
                         mission['claimable'] = True
                     break
             child.save()
+
+            send_topic_notification(
+                topic=user_id,
+                title="Mission completed!",
+                body=f"Parents has confirmed your mission, go claim your reward!",
+            )
         except:
             user_id = request.data['message']['toolCalls'][0]['function']['arguments']['user_id']
             mission_id = request.data['message']['toolCalls'][0]['function']['arguments']['mission_id']
@@ -258,6 +255,8 @@ class MissionViews:
         child = models.Children_Accounts.objects.filter(user_id=user_id).first()
 
         current_mission = next((mission for mission in child.notification['missions'] if mission['id'] == mission_id), None)
+
+
 
         if current_mission['confirmation'] == True:
             return Response({'status': 'Completed'}, status=HTTP_200_OK)
