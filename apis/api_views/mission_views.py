@@ -259,9 +259,51 @@ class MissionViews:
         else:
             return Response({'status': 'Not Completed'}, status=HTTP_200_OK)
 
+    @staticmethod
+    @api_view(['POST'])
+    def mission_add_result(request):
+        user_id = request.data['user_id']
+        mission_id = request.data['mission_id']
+        result = request.data['result']
+
+        child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+        mission = next((mission for mission in child.notification['missions'] if mission['id'] == mission_id), None)
+
+        # Handle all file attachments from request.FILES
+        if request.FILES:
+            result_urls = []
+            
+            # Process each file in request.FILES
+            for file_key, attachment_file in request.FILES.items():
+                # Generate a unique file name
+                file_extension = attachment_file.name.split('.')[-1]
+                unique_filename = f"mission_attachments/{user_id}/{str(uuid.uuid4())}.{file_extension}"
+                
+                # Upload to Firebase storage
+                blob = bucket.blob(unique_filename)
+                blob.upload_from_file(
+                    attachment_file.file,
+                    content_type=attachment_file.content_type
+                )
+                
+                # Get the download URL
+                blob.make_public()
+                result_url = blob.public_url
+                
+                # Add the URL to the list
+                result_urls.append(result_url)
+            
+            # Add all URLs to the mission data
+            mission['results'] = result_urls
+
+        child.save()
+
+        return Response({'message': 'Mission result added successfully'}, status=HTTP_200_OK)
+
 Mission_Add = MissionViews.mission_add
 Mission_Get = MissionViews.mission_get
 Mission_Update = MissionViews.mission_update
 Mission_Delete = MissionViews.mission_delete
 Mission_Complete = MissionViews.mission_complete
 Mission_Check_Completion = MissionViews.mission_check_completion 
+Mission_Add_Result = MissionViews.mission_add_result

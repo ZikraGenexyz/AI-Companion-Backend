@@ -37,6 +37,7 @@ urlpatterns = [
     path('mission/delete/', mission_views.Mission_Delete, name='mission-delete'),
     path('mission/complete/', mission_views.Mission_Complete, name='mission-complete'),
     path('mission/check-complete/', mission_views.Mission_Check_Completion, name='mission-check-completion'),
+    path('mission/add-result/', mission_views.Mission_Add_Result, name='mission-add-result'),
     
     # Love Note APIs
     path('love-note/add/', love_note_views.Love_Note_Add, name='love-note-add'),
