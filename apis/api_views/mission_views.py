@@ -261,6 +261,21 @@ class MissionViews:
             return Response({'status': 'Completed'}, status=HTTP_200_OK)
         else:
             return Response({'status': 'Not Completed'}, status=HTTP_200_OK)
+        
+    @staticmethod
+    @api_view(['POST'])
+    def mission_claim(request):
+        user_id = request.data['user_id']
+        mission_id = request.data['mission_id']
+        
+        child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+        for mission in child.notification['missions']:
+            if mission['id'] == mission_id:
+                mission['claimable'] = False
+                break
+        child.save()
+        
+        return Response({'message': 'Mission claimed successfully'}, status=HTTP_200_OK)
 
     @staticmethod
     @api_view(['POST'])
