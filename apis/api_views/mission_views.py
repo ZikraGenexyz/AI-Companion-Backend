@@ -231,7 +231,9 @@ class MissionViews:
                     mission['completed'] = True
                     mission['gpt_response'] = None
                     mission['confirmation'] = False
-                    mission['claimable'] = True
+                    
+                    if mission['category'] == 'Homework':
+                        mission['claimable'] = True
                     break
             child.save()
         except:
