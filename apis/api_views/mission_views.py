@@ -264,7 +264,6 @@ class MissionViews:
     def mission_add_result(request):
         user_id = request.data['user_id']
         mission_id = request.data['mission_id']
-        result = request.data['result']
 
         child = models.Children_Accounts.objects.filter(user_id=user_id).first()
         mission = next((mission for mission in child.notification['missions'] if mission['id'] == mission_id), None)
