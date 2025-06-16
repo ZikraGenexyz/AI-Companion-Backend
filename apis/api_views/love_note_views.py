@@ -50,7 +50,7 @@ class LoveNoteViews:
             notes = f'There is {len(uncompleted_love_notes)} love notes for you. \n'
             
             for i, note in enumerate(uncompleted_love_notes):
-                notes += f'{note['note']}, \n'
+                notes += f"{note['note']}, \n"
                 
                 # Mark the note as completed
                 child.notification['love_notes'][i]['completed'] = True
