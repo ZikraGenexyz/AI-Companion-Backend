@@ -46,6 +46,7 @@ class MissionViews:
         if mission_type == 'Homework':
             mission_data['instructions'] = request.data['mission_instructions']
             mission_data['confirmation'] = False
+            mission_data['claimable'] = False
             
             # Handle all file attachments from request.FILES
             if request.FILES:
@@ -160,13 +161,14 @@ class MissionViews:
             'due_time': mission_due_time,
             'repeat': mission_repeat,
             'category': mission_type,
-            'completed': False
+            'completed': False,
         }
         
         if mission_type == 'Homework':
             new_mission['instructions'] = mission_instructions
             new_mission['confirmation'] = False
             new_mission['gpt_response'] = None
+            new_mission['claimable'] = False
             
             # Handle all file attachments from request.FILES
             if request.FILES:
@@ -229,6 +231,7 @@ class MissionViews:
                     mission['completed'] = True
                     mission['gpt_response'] = None
                     mission['confirmation'] = False
+                    mission['claimable'] = True
                     break
             child.save()
         except:
