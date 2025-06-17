@@ -44,6 +44,7 @@ class LoveNoteViews:
             getUncompleted = True
 
         child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+        love_notes = child.notification['love_notes']
         uncompleted_love_notes = [note for note in child.notification['love_notes'] if not note['completed']]
 
         if getUncompleted:
