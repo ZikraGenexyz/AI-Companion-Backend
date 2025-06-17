@@ -1,6 +1,7 @@
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from django.conf import settings
+from django.contrib.auth.models import AnonymousUser
 import os
 
 class APIKeyAuthentication(BaseAuthentication):
@@ -13,14 +14,16 @@ class APIKeyAuthentication(BaseAuthentication):
     def authenticate(self, request):
         # Get the API key from request header
         api_key_header = request.META.get('HTTP_AUTHORIZATION')
-
-        print("AUTH HEADER: ", api_key_header)
+        
+        print(f"DEBUG - Auth header: {api_key_header}")
         
         if not api_key_header:
+            print("DEBUG - No authorization header found")
             return None
         
         # Check if the header starts with 'Api-Key '
         if not api_key_header.startswith('Api-Key '):
+            print(f"DEBUG - Header doesn't start with 'Api-Key ': {api_key_header}")
             return None
             
         # Extract the key
@@ -28,26 +31,28 @@ class APIKeyAuthentication(BaseAuthentication):
         
         # Get the valid API key from environment variables
         valid_api_key = os.getenv('API_KEY')
-
+        print(f"DEBUG - Env API key: {valid_api_key}")
         
         if not valid_api_key:
             # If API_KEY is not set in environment, use a default from settings
             valid_api_key = getattr(settings, 'API_KEY', None)
+            print(f"DEBUG - Settings API key: {valid_api_key}")
             
         if not valid_api_key:
             # If still no API key is configured, authentication fails
+            print("DEBUG - No API key configured")
             raise AuthenticationFailed('API key authentication is not properly configured')
             
-        print(valid_api_key)
-        print(key)
-
         # Check if the provided key matches the valid key
         if key != valid_api_key:
+            print(f"DEBUG - Invalid API key: {key} != {valid_api_key}")
             raise AuthenticationFailed('Invalid API key')
-            
-        # Authentication successful, but we don't have a user
-        # Return None for the user, and the API key as credentials
-        return (None, key)
+        
+        print("DEBUG - Authentication successful")
+        # Authentication successful, return an AnonymousUser
+        # This allows permission checks to work with IsAuthenticated
+        user = AnonymousUser()
+        return (user, key)
     
     def authenticate_header(self, request):
         return 'Api-Key' 
