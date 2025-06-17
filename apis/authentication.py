@@ -13,6 +13,8 @@ class APIKeyAuthentication(BaseAuthentication):
     def authenticate(self, request):
         # Get the API key from request header
         api_key_header = request.META.get('HTTP_AUTHORIZATION')
+
+        print("AUTH HEADER: ", api_key_header)
         
         if not api_key_header:
             return None
@@ -38,7 +40,7 @@ class APIKeyAuthentication(BaseAuthentication):
             
         print(valid_api_key)
         print(key)
-        
+
         # Check if the provided key matches the valid key
         if key != valid_api_key:
             raise AuthenticationFailed('Invalid API key')
