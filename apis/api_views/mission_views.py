@@ -220,19 +220,20 @@ class MissionViews:
             for mission in child.notification['missions']:
                 if mission['id'] == mission_id:
                     mission['completed'] = True
-                    mission['gpt_response'] = None
-                    mission['confirmation'] = False
 
                     if mission['category'] == 'Homework':
+                        mission['confirmation'] = False
+                        mission['gpt_response'] = None
                         mission['claimable'] = True
                     break
             child.save()
-
-            send_topic_notification(
-                topic=user_id,
-                title="Mission completed!",
-                body=f"Parents has confirmed your mission, go claim your reward!",
-            )
+            
+            if mission['category'] == 'Homework':
+                send_topic_notification(
+                    topic=user_id,
+                    title="Mission completed!",
+                    body=f"Parents has confirmed your mission, go claim your reward!",
+                )
         except:
             user_id = request.data['message']['toolCalls'][0]['function']['arguments']['user_id']
             mission_id = request.data['message']['toolCalls'][0]['function']['arguments']['mission_id']
