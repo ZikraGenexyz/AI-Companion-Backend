@@ -26,6 +26,7 @@ class APIKeyAuthentication(BaseAuthentication):
         
         # Get the valid API key from environment variables
         valid_api_key = os.getenv('API_KEY')
+
         
         if not valid_api_key:
             # If API_KEY is not set in environment, use a default from settings
@@ -35,6 +36,9 @@ class APIKeyAuthentication(BaseAuthentication):
             # If still no API key is configured, authentication fails
             raise AuthenticationFailed('API key authentication is not properly configured')
             
+        print(valid_api_key)
+        print(key)
+        
         # Check if the provided key matches the valid key
         if key != valid_api_key:
             raise AuthenticationFailed('Invalid API key')
