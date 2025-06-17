@@ -159,8 +159,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES':[
         'rest_framework.permissions.AllowAny'
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'apis.authentication.APIKeyAuthentication',
     ]
 }
+
+# API Key for authentication
+API_KEY = os.getenv('API_KEY', 'your-default-api-key-for-development')
 
 # CSRF settings
 CSRF_TRUSTED_ORIGINS = [

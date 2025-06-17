@@ -1,8 +1,10 @@
 from django.shortcuts import render
 from companion_app import models
 from rest_framework.response import Response
-from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_201_CREATED
-from rest_framework.decorators import api_view
+from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_201_CREATED, HTTP_401_UNAUTHORIZED
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from apis.authentication import APIKeyAuthentication
 from apis.firebase_admin import send_multicast_notification, send_push_notification, send_topic_notification
 from companion_app.models import DeviceToken
 import random
@@ -22,6 +24,8 @@ bucket = client.bucket(os.getenv("FIREBASE_BUCKET"))
 class MissionViews:
     @staticmethod
     @api_view(['POST'])
+    @authentication_classes([APIKeyAuthentication])
+    @permission_classes([IsAuthenticated])
     def mission_add(request):
         user_id = request.data['user_id']
         mission_type = request.data['mission_type']
@@ -90,6 +94,8 @@ class MissionViews:
     
     @staticmethod
     @api_view(['GET'])
+    @authentication_classes([APIKeyAuthentication])
+    @permission_classes([IsAuthenticated])
     def mission_get(request):
         user_id = request.GET.get('user_id')
         child = models.Children_Accounts.objects.filter(user_id=user_id).first()
@@ -99,6 +105,8 @@ class MissionViews:
 
     @staticmethod
     @api_view(['POST'])
+    @authentication_classes([APIKeyAuthentication])
+    @permission_classes([IsAuthenticated])
     def mission_update(request):
         user_id = request.data['user_id']
         mission_id = request.data['mission_id']
@@ -199,6 +207,8 @@ class MissionViews:
 
     @staticmethod
     @api_view(['DELETE'])
+    @authentication_classes([APIKeyAuthentication])
+    @permission_classes([IsAuthenticated])
     def mission_delete(request):
         user_id = request.data['user_id']
         mission_id = request.data['mission_id']
@@ -211,6 +221,8 @@ class MissionViews:
 
     @staticmethod
     @api_view(['POST'])
+    @authentication_classes([APIKeyAuthentication])
+    @permission_classes([IsAuthenticated])
     def mission_complete(request):
         try:
             user_id = request.data['user_id']
@@ -249,6 +261,8 @@ class MissionViews:
 
     @staticmethod
     @api_view(['GET'])
+    @authentication_classes([APIKeyAuthentication])
+    @permission_classes([IsAuthenticated])
     def mission_check_completion(request):
         user_id = request.GET.get('user_id')
         mission_id = request.GET.get('mission_id')
@@ -266,6 +280,8 @@ class MissionViews:
         
     @staticmethod
     @api_view(['POST'])
+    @authentication_classes([APIKeyAuthentication])
+    @permission_classes([IsAuthenticated])
     def mission_claim(request):
         user_id = request.data['user_id']
         mission_id = request.data['mission_id']
@@ -281,6 +297,8 @@ class MissionViews:
 
     @staticmethod
     @api_view(['POST'])
+    @authentication_classes([APIKeyAuthentication])
+    @permission_classes([IsAuthenticated])
     def mission_add_result(request):
         user_id = request.data['user_id']
         mission_id = request.data['mission_id']
