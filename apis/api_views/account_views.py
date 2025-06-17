@@ -111,7 +111,7 @@ class ChildAccountViews:
             "gender": "",
             "birth_date": birth_date,
             "school": "",
-            "energy_level": 0,
+            "energy_level": 25,
             "robot_type": robot_type,
             "robot_color": robot_color,
         })
