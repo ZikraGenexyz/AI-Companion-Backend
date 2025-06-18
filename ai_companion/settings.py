@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'apis',
     'whitenoise.runserver_nostatic',  # Add whitenoise for static files
     'corsheaders',
+    'django_celery_beat',  # For scheduled tasks
 ]
 
 MIDDLEWARE = [
@@ -136,7 +137,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Jakarta'
 
 USE_I18N = True
 
@@ -174,3 +175,25 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:3000',
     'http://127.0.0.1:8000',
 ]
+
+# Celery Configuration
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+
+# Celery Beat Configuration
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+# Example of a scheduled task - uncomment to enable
+# CELERY_BEAT_SCHEDULE = {
+#     'send-daily-reminder': {
+#         'task': 'apis.tasks.send_delayed_notification',
+#         'schedule': crontab(hour=9, minute=0),  # Every day at 9 AM Jakarta time
+#         'args': ('all-users', 'Daily Reminder', 'Don\'t forget your tasks today!'),
+#     },
+# }
