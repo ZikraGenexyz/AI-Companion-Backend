@@ -48,7 +48,7 @@ INSTALLED_APPS = [
     'apis',
     'whitenoise.runserver_nostatic',  # Add whitenoise for static files
     'corsheaders',
-    'django_celery_beat',  # For scheduled tasks
+    'django_apscheduler',  # For scheduled tasks
 ]
 
 MIDDLEWARE = [
@@ -176,24 +176,60 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8000',
 ]
 
-# Celery Configuration
-CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = TIME_ZONE
+# APScheduler Configuration
+APSCHEDULER_DATETIME_FORMAT = "N j, Y, f:s a"  # Default
 
-# Celery Beat Configuration
-from celery.schedules import crontab
+# Configure the scheduler to use DjangoJobStore
+SCHEDULER_CONFIG = {
+    "apscheduler.jobstores.default": {
+        "class": "django_apscheduler.jobstores:DjangoJobStore"
+    },
+    "apscheduler.executors.processpool": {
+        "type": "threadpool",
+        "max_workers": 5
+    },
+    "apscheduler.job_defaults.coalesce": False,
+    "apscheduler.job_defaults.max_instances": 3,
+    "apscheduler.timezone": TIME_ZONE,
+}
 
-CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+# Delete successful job executions after 24 hours
+APSCHEDULER_RUN_NOW_TIMEOUT = 25  # Seconds
 
-# Example of a scheduled task - uncomment to enable
-# CELERY_BEAT_SCHEDULE = {
-#     'send-daily-reminder': {
-#         'task': 'apis.tasks.send_delayed_notification',
-#         'schedule': crontab(hour=9, minute=0),  # Every day at 9 AM Jakarta time
-#         'args': ('all-users', 'Daily Reminder', 'Don\'t forget your tasks today!'),
-#     },
-# }
+# Logging configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'apis': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}

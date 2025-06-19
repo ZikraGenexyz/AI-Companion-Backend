@@ -4,11 +4,14 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_201_CREATED, HTTP_401_UNAUTHORIZED
 from rest_framework.decorators import api_view
 from apis.firebase_admin import send_multicast_notification, send_push_notification, send_topic_notification
+from apis.scheduler import schedule_mission_reminder
 from companion_app.models import DeviceToken
 import random
 import string
 import json
 import uuid
+import datetime
+from django.utils import timezone
 from google.cloud import storage
 from google.oauth2 import service_account
 import os
@@ -80,11 +83,45 @@ class MissionViews:
         child.notification['missions'].append(mission_data)
         child.save()
 
+        # Send immediate notification
         send_topic_notification(
             topic=user_id,
             title="You got new mission!",
             body=f"A new mission '{mission_title}' has been assigned",
         )
+        
+        # Schedule a reminder notification for the due date/time
+        try:
+            # Parse the due date and time
+            due_date_parts = mission_due_date.split('-')
+            due_time_parts = mission_due_time.split(':')
+            
+            if len(due_date_parts) == 3 and len(due_time_parts) >= 2:
+                year, month, day = map(int, due_date_parts)
+                hour, minute = map(int, due_time_parts[:2])
+                
+                # Create a datetime object for the due date/time
+                due_datetime = datetime.datetime(year, month, day, hour, minute)
+                
+                # Make it timezone-aware
+                due_datetime = timezone.make_aware(due_datetime)
+                
+                # If the due time is in the future, schedule a reminder
+                if due_datetime > timezone.now():
+                    # Schedule a reminder 1 hour before the due time
+                    reminder_time = due_datetime - datetime.timedelta(hours=1)
+                    
+                    # Only schedule if the reminder time is still in the future
+                    if reminder_time > timezone.now():
+                        # Use the scheduler function directly (not as a Celery task)
+                        schedule_mission_reminder(
+                            user_id=user_id,
+                            mission_id=mission_id,
+                            reminder_time=reminder_time
+                        )
+        except Exception as e:
+            # If there's an error scheduling the reminder, just log it and continue
+            print(f"Error scheduling reminder: {e}")
         
         return Response({'message': 'Mission added successfully'}, status=HTTP_201_CREATED)
     
