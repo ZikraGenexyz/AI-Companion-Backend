@@ -176,3 +176,5 @@ cython_debug/
 
 CELERY_USAGE.md
 SCHEDULER_USAGE.md
+
+staticfiles/
