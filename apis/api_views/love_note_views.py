@@ -50,11 +50,14 @@ class LoveNoteViews:
         if getUncompleted:
             notes = f'There is {len(uncompleted_love_notes)} love notes for you. \n'
             
-            for i, note in enumerate(uncompleted_love_notes):
+            # First build the response with uncompleted notes
+            for note in uncompleted_love_notes:
                 notes += f"{note['note']}, \n"
-                
-                # Mark the note as completed
-                child.notification['love_notes'][i]['completed'] = True
+            
+            # Then mark all uncompleted notes as completed
+            for i, note in enumerate(child.notification['love_notes']):
+                if not note['completed']:
+                    child.notification['love_notes'][i]['completed'] = True
             
             child.save()
                 
