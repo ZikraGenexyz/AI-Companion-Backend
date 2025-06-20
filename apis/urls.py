@@ -45,6 +45,7 @@ urlpatterns = [
     path('love-note/get/', love_note_views.Love_Note_Get, name='love-note-get'),
     path('love-note/update/', love_note_views.Love_Note_Update, name='love-note-update'),
     path('love-note/delete/', love_note_views.Love_Note_Delete, name='love-note-delete'),
+    path('love-note/count/', love_note_views.Love_Note_Count, name='love-note-count'),
     
     # Friend APIs
     path('friend/list/', social_views.Get_Friend_List, name='get-friend-list'),

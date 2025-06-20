@@ -35,6 +35,19 @@ class LoveNoteViews:
     
     @staticmethod
     @api_view(['POST'])
+    def love_note_count(request):
+        user_id = request.data['message']['toolCalls'][0]['function']['arguments']['user_id']
+
+        child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+
+        love_notes = child.notification['love_notes']
+
+        uncompleted_love_notes = [note for note in love_notes if not note['completed']]
+        
+        return Response({"results":[{"result": f'There is {len(uncompleted_love_notes)} love notes.', "toolCallId": request.data['message']['toolCalls'][0]['id']}]}, status=HTTP_200_OK)
+        
+    @staticmethod
+    @api_view(['POST'])
     def love_note_get(request):
         try:
             user_id = request.data['user_id']
@@ -96,3 +109,4 @@ Love_Note_Add = LoveNoteViews.love_note_add
 Love_Note_Get = LoveNoteViews.love_note_get
 Love_Note_Update = LoveNoteViews.love_note_update
 Love_Note_Delete = LoveNoteViews.love_note_delete
+Love_Note_Count = LoveNoteViews.love_note_count

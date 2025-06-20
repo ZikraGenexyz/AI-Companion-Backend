@@ -1,15 +1,20 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from django_apscheduler.jobstores import DjangoJobStore
 from django.utils import timezone
+from django.conf import settings
 import logging
+import pytz
 
 logger = logging.getLogger(__name__)
 
-# Create scheduler instance
-scheduler = BackgroundScheduler()
+# Set Jakarta timezone
+JAKARTA_TZ = pytz.timezone('Asia/Jakarta')
+
+# Create scheduler instance with explicit timezone
+scheduler = BackgroundScheduler(timezone=JAKARTA_TZ)
 scheduler.add_jobstore(DjangoJobStore(), "default")
 
-def send_scheduled_notification(topic, title, body):
+def send_scheduled_notification(topic, title, body, category):
     """
     Send a notification at a scheduled time
     
@@ -20,10 +25,10 @@ def send_scheduled_notification(topic, title, body):
     """
     from apis.firebase_admin import send_topic_notification
     
-    current_time = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
+    current_time = timezone.now().astimezone(JAKARTA_TZ).strftime("%Y-%m-%d %H:%M:%S")
     logger.info(f"Sending scheduled notification at {current_time} to {topic}: {title}")
     
-    result = send_topic_notification(topic, title, body)
+    result = send_topic_notification(topic, title, body, data={"category": "mission"})
     return {
         "status": "sent", 
         "time": current_time,
@@ -31,7 +36,7 @@ def send_scheduled_notification(topic, title, body):
         "topic": topic
     }
 
-def schedule_mission_reminder(user_id, mission_id, reminder_time):
+def schedule_mission_reminder(user_id, mission_id, reminder_time, category):
     """
     Schedule a reminder for a mission
     
@@ -49,10 +54,15 @@ def schedule_mission_reminder(user_id, mission_id, reminder_time):
             reminder_datetime = datetime.datetime.fromisoformat(reminder_time)
             if reminder_datetime.tzinfo is None:
                 # Make timezone-aware if it's not
-                reminder_datetime = timezone.make_aware(reminder_datetime)
+                reminder_datetime = JAKARTA_TZ.localize(reminder_datetime)
         else:
             # Assume it's already a datetime
             reminder_datetime = reminder_time
+            if reminder_datetime.tzinfo is None:
+                reminder_datetime = JAKARTA_TZ.localize(reminder_datetime)
+            else:
+                # Ensure the datetime is in Jakarta timezone
+                reminder_datetime = reminder_datetime.astimezone(JAKARTA_TZ)
             
         # Get mission details
         child = Children_Accounts.objects.filter(user_id=user_id).first()
@@ -80,8 +90,9 @@ def schedule_mission_reminder(user_id, mission_id, reminder_time):
             replace_existing=True,
             kwargs={
                 'topic': user_id,
-                'title': f"Reminder: {mission['title']}",
-                'body': f"You got new mission incoming: {mission['title']}"
+                'title': f"There is an incoming mission!",
+                'body': f"{mission['title']} mission is incoming! let's go and complete it!",
+                'category': category
             }
         )
         

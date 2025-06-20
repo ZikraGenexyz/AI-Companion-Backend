@@ -12,9 +12,13 @@ import json
 import uuid
 import datetime
 from django.utils import timezone
+import pytz
 from google.cloud import storage
 from google.oauth2 import service_account
 import os
+
+# Set the Jakarta timezone
+JAKARTA_TZ = pytz.timezone('Asia/Jakarta')
 
 # Initialize Firebase Storage
 creds_dict = json.loads(os.getenv("FIREBASE_CREDENTIALS"))
@@ -84,11 +88,11 @@ class MissionViews:
         child.save()
 
         # Send immediate notification
-        send_topic_notification(
-            topic=user_id,
-            title="You got new mission!",
-            body=f"A new mission '{mission_title}' has been assigned",
-        )
+        # send_topic_notification(
+        #     topic=user_id,
+        #     title="You got new mission!",
+        #     body=f"A new mission '{mission_title}' has been assigned",
+        # )
         
         # Schedule a reminder notification for the due date/time
         try:
@@ -103,22 +107,29 @@ class MissionViews:
                 # Create a datetime object for the due date/time
                 due_datetime = datetime.datetime(year, month, day, hour, minute)
                 
-                # Make it timezone-aware
-                due_datetime = timezone.make_aware(due_datetime)
+                # Make it timezone-aware with Jakarta timezone
+                due_datetime = JAKARTA_TZ.localize(due_datetime)
+                
+                # Get current time in Jakarta timezone
+                now = timezone.now().astimezone(JAKARTA_TZ)
                 
                 # If the due time is in the future, schedule a reminder
-                if due_datetime > timezone.now():
+                if due_datetime > now:
                     # Schedule a reminder 1 hour before the due time
-                    reminder_time = due_datetime - datetime.timedelta(hours=1)
+                    delta_time = due_datetime - now
+
+                    print("REMINDER TIME: ", delta_time)
+                    print("TIMEZONE NOW: ", now)
                     
                     # Only schedule if the reminder time is still in the future
-                    if reminder_time > timezone.now():
+                    # if delta_time < datetime.timedelta(minutes=10):
                         # Use the scheduler function directly (not as a Celery task)
-                        schedule_mission_reminder(
-                            user_id=user_id,
-                            mission_id=mission_id,
-                            reminder_time=reminder_time
-                        )
+                    schedule_mission_reminder(
+                        user_id=user_id,
+                        mission_id=mission_id,
+                        reminder_time=due_datetime,
+                        category="mission"
+                    )
         except Exception as e:
             # If there's an error scheduling the reminder, just log it and continue
             print(f"Error scheduling reminder: {e}")
