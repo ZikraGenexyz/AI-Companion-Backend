@@ -3,6 +3,7 @@ from companion_app import models
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_201_CREATED
 from rest_framework.decorators import api_view
+from apis.firebase_admin import send_topic_notification
 import random
 import string
 from datetime import datetime
@@ -191,6 +192,40 @@ class ChildAccountViews:
             'love_notes': love_note_list, 
             'user_info': user_info}, status=HTTP_200_OK)
     
+    @staticmethod
+    @api_view(['POST'])
+    def child_recharge_energy(request):
+        user_id = request.data['user_id']
+        amount = int(request.data['amount'])
+
+        child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+        child.user_info['energy_level'] += amount
+        child.save()
+
+        send_topic_notification(
+            topic=user_id,
+            title="Energy Recharged",
+            body=f"You have recharged {amount} energy points",
+            data={
+                "category": "energy",
+                "amount": str(amount),
+            }
+        )
+
+        return Response({'message': 'Energy recharged successfully'}, status=HTTP_200_OK)
+    
+    @staticmethod
+    @api_view(['PUT'])
+    def child_update_energy(request):
+        user_id = request.data['user_id']
+        energy_level = int(request.data['energy_level'])
+
+        child = models.Children_Accounts.objects.filter(user_id=user_id).first()
+        child.user_info['energy_level'] = energy_level
+        child.save()
+
+        return Response({'message': 'Energy updated successfully'}, status=HTTP_200_OK)
+    
 class BindingViews:
     @staticmethod
     @api_view(['POST'])
@@ -257,6 +292,8 @@ Child_Get_Info = ChildAccountViews.child_get_info
 Child_Update = ChildAccountViews.child_update
 Child_Delete = ChildAccountViews.child_delete
 Child_Bind_Status = ChildAccountViews.child_bind_status
+Child_Recharge_Energy = ChildAccountViews.child_recharge_energy
+Child_Update_Energy = ChildAccountViews.child_update_energy
 
 Create_Bind_OTP = BindingViews.create_bind_otp
 Verify_Bind_OTP = BindingViews.verify_bind_otp

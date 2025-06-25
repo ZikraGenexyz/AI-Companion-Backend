@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_201_CREATED, HTTP_401_UNAUTHORIZED
 from rest_framework.decorators import api_view
 from apis.firebase_admin import send_multicast_notification, send_push_notification, send_topic_notification
-from apis.scheduler import schedule_mission_reminder
+from apis.scheduler import schedule_mission_reminder, cancel_mission_reminder
 from companion_app.models import DeviceToken
 import random
 import string
@@ -35,6 +35,8 @@ class MissionViews:
         mission_title = request.data['mission_title']
         mission_due_date = request.data['mission_due_date']
         mission_due_time = request.data['mission_due_time']
+        mission_created_date = request.data['mission_created_date']
+        mission_created_time = request.data['mission_created_time']
         mission_repeat = request.data['mission_repeat']
             
         mission_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
@@ -86,49 +88,60 @@ class MissionViews:
         child = models.Children_Accounts.objects.filter(user_id=user_id).first()
         child.notification['missions'].append(mission_data)
         child.save()
-
-        # Send immediate notification
-        # send_topic_notification(
-        #     topic=user_id,
-        #     title="You got new mission!",
-        #     body=f"A new mission '{mission_title}' has been assigned",
-        # )
         
         # Schedule a reminder notification for the due date/time
         try:
             # Parse the due date and time
             due_date_parts = mission_due_date.split('-')
             due_time_parts = mission_due_time.split(':')
+            created_date_parts = mission_created_date.split('-')
+            created_time_parts = mission_created_time.split(':')
             
             if len(due_date_parts) == 3 and len(due_time_parts) >= 2:
                 year, month, day = map(int, due_date_parts)
                 hour, minute = map(int, due_time_parts[:2])
+
+                year_created, month_created, day_created = map(int, created_date_parts)
+                hour_created, minute_created = map(int, created_time_parts[:2])
                 
                 # Create a datetime object for the due date/time
                 due_datetime = datetime.datetime(year, month, day, hour, minute)
-                
-                # Make it timezone-aware with Jakarta timezone
-                due_datetime = JAKARTA_TZ.localize(due_datetime)
+                created_datetime = datetime.datetime(year_created, month_created, day_created, hour_created, minute_created)
                 
                 # Get current time in Jakarta timezone
                 now = timezone.now().astimezone(JAKARTA_TZ)
-                
-                # If the due time is in the future, schedule a reminder
-                if due_datetime > now:
-                    # Schedule a reminder 1 hour before the due time
-                    delta_time = due_datetime - now
 
-                    print("REMINDER TIME: ", delta_time)
-                    print("TIMEZONE NOW: ", now)
+                delta_time = due_datetime - created_datetime
+
+                print("DELTA TIME: ", delta_time)
+
+                if delta_time == datetime.timedelta(minutes=0):
+                    send_topic_notification(
+                        topic=user_id,
+                        title="You got new mission!",
+                        body=f"A new mission '{mission_title}' has been assigned",
+                    )
+                else:
+                    reminder_datetime = (now + delta_time).replace(second=0, microsecond=0)
                     
-                    # Only schedule if the reminder time is still in the future
-                    # if delta_time < datetime.timedelta(minutes=10):
-                        # Use the scheduler function directly (not as a Celery task)
                     schedule_mission_reminder(
                         user_id=user_id,
                         mission_id=mission_id,
-                        reminder_time=due_datetime,
-                        category="mission"
+                        reminder_time=reminder_datetime,
+                        category="mission",
+                        title=f"There is an incoming mission!",
+                        body=f"{mission_title} mission has been assigned! let's go and complete it!",
+                    )
+                
+                # If the due time is in the future, schedule a reminder
+                if delta_time > datetime.timedelta(minutes=15) and mission_type == 'Homework':
+                    schedule_mission_reminder(
+                        user_id=user_id,
+                        mission_id=mission_id,
+                        reminder_time=reminder_datetime - datetime.timedelta(minutes=15),
+                        category="mission",
+                        title=f"There is an incoming homework!",
+                        body=f"homework mission is incoming in 15 minutes! let's prepare for it!",
                     )
         except Exception as e:
             # If there's an error scheduling the reminder, just log it and continue
@@ -250,6 +263,8 @@ class MissionViews:
     def mission_delete(request):
         user_id = request.data['user_id']
         mission_id = request.data['mission_id']
+        
+        cancel_mission_reminder(user_id, mission_id)
 
         child = models.Children_Accounts.objects.filter(user_id=user_id).first()
         child.notification['missions'] = [mission for mission in child.notification['missions'] if mission['id'] != mission_id]

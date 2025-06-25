@@ -18,6 +18,8 @@ urlpatterns = [
     path('child/update/', account_views.Child_Update, name='child-update'),
     path('child/delete/', account_views.Child_Delete, name='child-delete'),
     path('child/bind-status/', account_views.Child_Bind_Status, name='child-bind-status'),
+    path('child/recharge-energy/', account_views.Child_Recharge_Energy, name='child-recharge-energy'),
+    path('child/update-energy/', account_views.Child_Update_Energy, name='child-update-energy'),
     
     # Binding APIs
     path('binding/create-otp/', account_views.Create_Bind_OTP, name='create-bind-otp'),

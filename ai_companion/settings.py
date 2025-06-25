@@ -184,17 +184,22 @@ SCHEDULER_CONFIG = {
     "apscheduler.jobstores.default": {
         "class": "django_apscheduler.jobstores:DjangoJobStore"
     },
+    "apscheduler.executors.threadpool": {
+        "class": "apscheduler.executors.pool:ThreadPoolExecutor",
+        "max_workers": 20  # Increased from 5 to 20 for more concurrent jobs
+    },
     "apscheduler.executors.processpool": {
-        "type": "threadpool",
+        "type": "processpool",
         "max_workers": 5
     },
-    "apscheduler.job_defaults.coalesce": False,
-    "apscheduler.job_defaults.max_instances": 3,
+    "apscheduler.job_defaults.coalesce": True,  # Changed to True to prevent duplicate jobs
+    "apscheduler.job_defaults.max_instances": 10,  # Increased from 3 to 10
     "apscheduler.timezone": TIME_ZONE,
+    "apscheduler.misfire_grace_time": 60,  # Add grace time for misfired jobs (in seconds)
 }
 
-# Delete successful job executions after 24 hours
-APSCHEDULER_RUN_NOW_TIMEOUT = 25  # Seconds
+# Delete successful job executions after 24 hours (increased timeout)
+APSCHEDULER_RUN_NOW_TIMEOUT = 60  # Increased from 25 to 60 seconds
 
 # Logging configuration
 LOGGING = {
