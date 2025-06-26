@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>AI Voice Assistant</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 0;
+                background-color: #f5f5f5;
+                height: 100vh;
+                display: flex;
+                /* flex-direction: column; */
+            }
+            .container {
+                flex: 1;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+            }
+            h1 {
+                color: #333;
+                text-align: center;
+                margin-bottom: 20px;
+            }
+            .chat-box {
+                flex: 1;
+                background-color: white;
+                border-radius: 20px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+                padding: 0;
+                display: flex;
+                flex-direction: column;
+                position: relative;
+                overflow: auto;
+                max-height: 80vh;
+
+            }
+            .messages-container {
+                flex: 1;
+                overflow-y: auto;
+                padding: 20px;
+                height: 80%;
+                background: linear-gradient(to bottom, #ffffff, #f8f9fa);
+                scroll-behavior: smooth;
+            }
+            .message {
+                margin: 10px 0;
+                padding: 12px 18px;
+                border-radius: 20px;
+                max-width: 80%;
+                word-wrap: break-word;
+                box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+                position: relative;
+                animation: fadeIn 0.3s ease;
+            }
+            @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            }
+            .user-message {
+                background-color: #007AFF;
+                color: white;
+                margin-left: auto;
+                border-bottom-right-radius: 5px;
+            }
+            .ai-message {
+                background-color: #f0f0f0;
+                color: #333;
+                margin-right: auto;
+                border-bottom-left-radius: 5px;
+            }
+            .input-area {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                padding: 20px;
+                background-color: white;
+                border-top: 1px solid #eee;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+            }
+            .mic-button {            
+                min-width: 54px;
+                height: 54px;
+                border-radius: 50%;
+                background-color: #007AFF;
+                border: none;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s ease;
+                margin-right: 20px;
+                margin-left: 10px;
+            }
+            .mic-button:hover {
+                background-color: #0056b3;
+                transform: scale(1.05);
+            }
+            .mic-button.active {
+                background-color: #ff3b30;
+                animation: pulse 1.5s infinite;
+                box-shadow: 0 4px 12px rgba(255,59,48,0.3);
+            }
+            .mic-button svg {
+                width: 24px;
+                height: 24px;
+                fill: white;
+            }
+            #status {
+                text-align: center;
+                margin: 10px 0;
+                color: #666;
+                font-style: italic;
+                font-size: 0.9em;
+            }
+            .error-message {
+                background-color: #ffebee;
+                color: #c62828;
+                border: 1px solid #ffcdd2;
+                border-radius: 20px;
+            }
+            /* Typing indicator styles */
+            .typing-indicator {
+                display: inline-flex;
+                align-items: center;
+                background-color: #f0f0f0;
+                padding: 8px 16px;
+                border-radius: 20px;
+                margin: 10px 0;
+                box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            }
+            .typing-dots {
+                display: flex;
+                gap: 4px;
+                margin-left: 8px;
+            }
+            .typing-dot {
+                width: 8px;
+                height: 8px;
+                background-color: #666;
+                border-radius: 50%;
+                animation: typing 1s infinite;
+            }
+            .typing-dot:nth-child(2) {
+                animation-delay: 0.2s;
+            }
+            .typing-dot:nth-child(3) {
+                animation-delay: 0.4s;
+            }
+            @keyframes typing {
+                0%, 100% {
+                    transform: translateY(0);
+                }
+                50% {
+                    transform: translateY(-4px);
+                }
+            }
+            @keyframes pulse {
+                0% {
+                    transform: scale(1);
+                }
+                50% {
+                    transform: scale(1.1);
+                }
+                100% {
+                    transform: scale(1);
+                }
+            }
+            /* Custom scrollbar for messages container */
+            .messages-container::-webkit-scrollbar {
+                /* width: 8px; */
+                display: none;
+            }
+            .messages-container::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 4px;
+            }
+            .messages-container::-webkit-scrollbar-thumb {
+                background: #888;
+                border-radius: 4px;
+            }
+            .messages-container::-webkit-scrollbar-thumb:hover {
+                background: #555;
+            }
+            .vad-status {
+                display: none;
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                padding: 10px 20px;
+                border-radius: 20px;
+                background: rgba(0, 0, 0, 0.7);
+                color: white;
+                transition: all 0.3s ease;
+            }
+            .vad-status.active {
+                background: rgba(0, 122, 255, 0.7);
+            }
+            /* Toggle Switch Styles */
+            .toggle-switch {
+                position: absolute;
+                display: inline-block;
+                width: 60px;
+                height: 34px;
+            }
+            .toggle-switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+            .toggle-slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #ccc;
+                transition: .4s;
+                border-radius: 34px;
+            }
+            .toggle-slider:before {
+                position: absolute;
+                content: "";
+                height: 26px;
+                width: 26px;
+                left: 4px;
+                bottom: 4px;
+                background-color: white;
+                transition: .4s;
+                border-radius: 50%;
+            }
+            input:checked + .toggle-slider {
+                background-color: #007AFF;
+            }
+            input:checked + .toggle-slider:before {
+                transform: translateX(26px);
+            }
+            .toggle-label {
+                color: #666;
+                font-size: 14px;
+                flex: 1;
+                text-align: center;
+                margin-right: 5px;
+            }
+            .toggle-container {
+                flex: 1;
+                display: flex;
+                padding-left: 20px;
+                padding-right: 15px;
+                align-items: center;
+                justify-content: center;
+            }
+            .cartesia-button {            
+                min-width: 54px;
+                height: 54px;
+                border-radius: 50%;
+                background-color: #ccc;
+                border: none;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s ease;
+                margin-right: 10px;
+                font-family: 'Arial', sans-serif;
+                font-size: 24px;
+                font-weight: bold;
+                color: white;
+            }
+            .cartesia-button:hover {
+                transform: scale(1.05);
+            }
+            .cartesia-button.active {
+                background-color: #007AFF;
+            }
+            .cartesia-button svg {
+                width: 24px;
+                height: 24px;
+                fill: white;
+            }
+            /* Text Input Styles */
+            .input-container {
+                width: 100%;
+                height: 20%;
+                display: flex;
+                align-items: center;
+            }
+            .text-input {
+                width: 70%;
+                height: 34px;
+                padding: 8px 15px 8px 15px;
+                margin-left: 15px;
+                border: 2px solid #ccc;
+                border-radius: 30px;
+                font-size: 14px;
+                outline: none;
+                transition: border-color 0.3s ease;
+                background-color: white;
+            }
+            .text-input:focus {
+                border-color: #007AFF;
+            }
+            .text-input:disabled {
+                background-color: #f5f5f5;
+                cursor: not-allowed;
+                border-color: #ddd;
+            }
+            .send-button {            
+                min-width: 54px;
+                height: 54px;
+                border-radius: 50%;
+                background-color: #34C759;
+                border: none;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s ease;
+                margin-right: 20px;
+                margin-left: 10px;
+            }
+            .send-button:hover {
+                background-color: #2FB350;
+                transform: scale(1.05);
+            }
+            .send-button svg {
+                width: 18px;
+                height: 18px;
+                fill: white;
+            }
+            .hidden {
+                display: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>AI Voice Assistant</h1>
+            <div class="chat-box">
+                <div class="messages-container" id="messagesContainer"></div>
+                <div class="input-container">
+                    <div class="toggle-container">  
+                        <button class="cartesia-button" id="cartesiaButton">
+                            C
+                        </button>
+                    </div>
+                    <input type="text" class="text-input" id="textInput" placeholder="Type a message...">
+                    <button class="send-button hidden" id="sendButton">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                        </svg>
+                    </button>
+                    <button class="mic-button" id="micButton">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="vadStatus" class="vad-status">Initializing...</div>
+
+        <script>
+            const messagesContainer = document.getElementById('messagesContainer');
+            const vadStatus = document.getElementById('vadStatus');
+            let recognition = null;
+            let isProcessing = false;
+            let currentTranscript = '';
+            let isSpeaking = false;
+            let isMicActive = false;
+            let conversationHistory = [];
+            let previousMicState = false;  // Track previous mic state
+
+            async function initializeContinuousListening() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    window.activeStream = stream;  // Store stream reference for cleanup
+                    window.audioContext = new AudioContext();
+                    setupVAD(stream);
+
+                    if ('webkitSpeechRecognition' in window) {
+                        recognition = new webkitSpeechRecognition();
+                        recognition.continuous = true;
+                        recognition.interimResults = true;
+                        recognition.lang = 'en-US';
+
+                        setupRecognition();
+                        startContinuousListening();
+
+                        vadStatus.textContent = 'Talk';
+                    } else {
+                        showError('Speech recognition not supported in your browser');
+                    }
+                } catch (error) {
+                    console.error('Error initializing:', error);
+                    showError('Error accessing microphone');
+                    isMicActive = false;
+                    micButton.classList.remove('active');
+                    textInput.disabled = false;
+                    vadStatus.style.display = 'none';
+                }
+            }
+
+            function setupVAD(stream) {
+                const source = window.audioContext.createMediaStreamSource(stream);
+                // Reduce buffer size for faster processing
+                const processor = window.audioContext.createScriptProcessor(2048, 1, 1);
+
+                source.connect(processor);
+                processor.connect(window.audioContext.destination);
+                
+                // Optimized VAD configuration
+                const VAD_CONFIG = {
+                    // Main threshold for voice detection
+                    VOICE_THRESHOLD: 0.01,
+                    // Number of samples above threshold to trigger voice detection
+                    MIN_VOICE_SAMPLES: 3,
+                    // Delay before considering voice has ended (ms)
+                    VOICE_END_DELAY: 1000,
+                    // Size of voice detection history buffer
+                    HISTORY_SIZE: 3
+                };
+                
+                let voiceHistory = new Array(VAD_CONFIG.HISTORY_SIZE).fill(false);
+                
+                // Initialize noise floor calibration
+                let noiseFloor = 0;
+                let calibrationCount = 0;
+                const CALIBRATION_SAMPLES = 10;  // Reduced calibration samples
+
+                // Pre-calculate array length for optimization
+                const processorLength = 2048;
+                
+                processor.onaudioprocess = function(e) {
+                    const input = e.inputBuffer.getChannelData(0);
+                    
+                    // Optimized RMS calculation
+                    let sum = 0;
+                    for (let i = 0; i < processorLength; i += 4) { // Process every 4th sample
+                        sum += input[i] * input[i];
+                    }
+                    const rms = Math.sqrt(sum * 4 / processorLength);
+
+                    // Quick calibration
+                    if (calibrationCount < CALIBRATION_SAMPLES) {
+                        noiseFloor = (noiseFloor * calibrationCount + rms) / (calibrationCount + 1);
+                        calibrationCount++;
+                        return;
+                    }
+
+                    // Simplified threshold calculation
+                    const dynamicThreshold = noiseFloor * 2.5 || VAD_CONFIG.VOICE_THRESHOLD;
+
+                    // Efficient voice detection
+                    voiceHistory.shift();
+                    voiceHistory.push(rms > dynamicThreshold);
+
+                    // Quick count of true values
+                    const activeCount = voiceHistory.reduce((count, value) => count + (value ? 1 : 0), 0);
+                    const isVoiceActive = activeCount >= VAD_CONFIG.MIN_VOICE_SAMPLES;
+
+                    if (isVoiceActive && !isSpeaking) {
+                        // Voice activity started
+                        isSpeaking = true;
+                        vadStatus.textContent = 'Listening...';
+                        vadStatus.classList.add('active');
+                        
+                        // Update noise floor slowly during speech
+                        noiseFloor = noiseFloor * 0.95 + Math.min(rms, noiseFloor) * 0.05;
+                    } else if (!isVoiceActive && isSpeaking) {
+                        // Voice activity ended
+                        setTimeout(() => {
+                            if (!isProcessing) {
+                                isSpeaking = false;
+                                vadStatus.textContent = 'Talk';
+                                vadStatus.classList.remove('active');
+                                
+                                // Update noise floor more quickly during silence
+                                noiseFloor = noiseFloor * 0.8 + rms * 0.2;
+                            }
+                        }, VAD_CONFIG.VOICE_END_DELAY);
+                    }
+                };
+            }
+
+            function logError(error, details = {}) {
+                const errorLog = {
+                    timestamp: new Date().toISOString(),
+                    error: error,
+                    details: details
+                };
+                console.error('Speech Recognition Error Log:', errorLog);
+            }
+
+            function showDetailedError(message) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'message ai-message error-message';
+                
+                // Split the message by newlines and create separate lines
+                const lines = message.split('\n');
+                lines.forEach((line, index) => {
+                    if (index > 0) {
+                        errorDiv.appendChild(document.createElement('br'));
+                    }
+                    errorDiv.appendChild(document.createTextNode(line));
+                });
+                
+                messagesContainer.appendChild(errorDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+
+            function setupRecognition() {
+                let silenceTimer = null;
+                let networkRetryCount = 0;
+                const MAX_RETRIES = 3;
+
+                recognition.onresult = (event) => {
+                    // Reset network retry count on successful result
+                    networkRetryCount = 0;
+                    const result = event.results[event.results.length - 1];
+                    currentTranscript = result[0].transcript;
+
+                    if (result.isFinal) {
+                        clearTimeout(silenceTimer);
+                        processText(currentTranscript);
+                        currentTranscript = '';
+                    } else {
+                        clearTimeout(silenceTimer);
+                        silenceTimer = setTimeout(() => {
+                            if (currentTranscript.trim()) {
+                                processText(currentTranscript);
+                                currentTranscript = '';
+                            }
+                        }, 1500);
+                    }
+                };
+
+                recognition.onerror = (event) => {
+                    const errorDetails = {
+                        errorType: event.error,
+                        timestamp: new Date().toISOString(),
+                        browser: navigator.userAgent,
+                        retryCount: networkRetryCount,
+                        networkStatus: navigator.onLine ? 'Connected' : 'Disconnected'
+                    };
+                    
+                    if (event.error === 'network') {
+                        networkRetryCount++;
+                        logError('Network Error in Speech Recognition', {
+                            ...errorDetails,
+                            message: networkRetryCount <= MAX_RETRIES ? 
+                                `Attempting to reconnect (${networkRetryCount}/${MAX_RETRIES})` :
+                                'Max retry attempts reached. Please check your connection.'
+                        });
+
+                        if (networkRetryCount <= MAX_RETRIES) {
+                            setTimeout(() => {
+                                if (isMicActive) {
+                                    restartRecognition();
+                                }
+                            }, 2000);
+                        } else {
+                            isMicActive = false;
+                            micButton.classList.remove('active');
+                            vadStatus.style.display = 'none';
+                            textInput.disabled = false;
+                            textInput.placeholder = 'Type a message...';
+                        }
+                    } else if (event.error === 'no-speech') {
+                        // Just log no-speech errors without showing to user
+                        logError('No Speech Detected', errorDetails);
+                    } else if (event.error === 'audio-capture') {
+                        logError('Microphone Error', {
+                            ...errorDetails,
+                            message: 'Could not access microphone. Please check your settings.'
+                        });
+                    } else if (event.error === 'not-allowed') {
+                        logError('Permission Denied', {
+                            ...errorDetails,
+                            message: 'Microphone access was denied. Please enable microphone access.'
+                        });
+                    } else if (event.error === 'aborted') {
+                        logError('Recognition Aborted', errorDetails);
+                    } else {
+                        logError('Unknown Recognition Error', {
+                            ...errorDetails,
+                            message: `Unexpected error: ${event.error}`
+                        });
+                    }
+                };
+
+                recognition.onend = () => {
+                    if (isMicActive && !isProcessing) {
+                        logError('Recognition Session Ended', {
+                            timestamp: new Date().toISOString(),
+                            isProcessing,
+                            isMicActive,
+                            networkRetryCount,
+                            message: 'Attempting to restart recognition...'
+                        });
+                        restartRecognition();
+                    }
+                };
+            }
+
+            function startContinuousListening() {
+                try {
+                    recognition.start();
+                } catch (error) {
+                    console.error('Error starting recognition:', error);
+                    setTimeout(restartRecognition, 1000);
+                }
+            }
+
+            function restartRecognition() {
+                if (!isProcessing && isMicActive) {
+                    setTimeout(() => {
+                        try {
+                            recognition.start();
+                        } catch (error) {
+                            console.error('Error restarting recognition:', {
+                                error: error.message,
+                                timestamp: new Date().toISOString(),
+                                type: error.name
+                            });
+                            
+                            if (error.name === 'NotAllowedError') {
+                                showError('Microphone permission denied. Please enable microphone access.');
+                                isMicActive = false;
+                                micButton.classList.remove('active');
+                                vadStatus.style.display = 'none';
+                                textInput.disabled = false;
+                                textInput.placeholder = 'Type a message...';
+                            } else {
+                                setTimeout(restartRecognition, 2000);
+                            }
+                        }
+                    }, 100);
+                }
+            }
+
+            function muteMic() {
+                if (window.activeStream) {
+                    previousMicState = isMicActive;  // Store current state
+                    window.activeStream.getAudioTracks().forEach(track => {
+                        track.enabled = false;  // Mute the track
+                    });
+                    if (recognition) {
+                        recognition.stop();
+                    }
+                    isMicActive = false;
+                    micButton.classList.remove('active');
+                    vadStatus.textContent = 'Processing...';
+                }
+            }
+
+            function unmuteMic() {
+                if (window.activeStream && previousMicState) {  // Only unmute if it was previously active
+                    window.activeStream.getAudioTracks().forEach(track => {
+                        track.enabled = true;  // Unmute the track
+                    });
+                    isMicActive = true;
+                    micButton.classList.add('active');
+                    startContinuousListening();
+                    vadStatus.textContent = 'Talk';
+                }
+            }
+
+            async function processText(text) {
+                if (!text || text.trim() === '' || isProcessing) return;
+
+                isProcessing = true;
+                muteMic();  // Mute mic when processing starts
+                vadStatus.textContent = 'Processing...';
+                addMessage(text, true);
+
+                try {
+                    const response = await fetch('/process-audio/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ 
+                            text: text,
+                            useCartesia: document.getElementById('cartesiaButton').classList.contains('active'),
+                            conversationHistory: conversationHistory.slice(0, -1) 
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.error) {
+                        showError(data.error);
+                        unmuteMic();  // Unmute on error
+                        return;
+                    }
+
+                    addMessage(data.response);
+
+                    if (data.audio) {
+                        const audio = new Audio(`data:audio/mp3;base64,${data.audio}`);
+                        
+                        // Add event listener for when audio finishes
+                        audio.onended = () => {
+                            isProcessing = false;
+                            unmuteMic();  // Unmute after audio finishes
+                            vadStatus.textContent = isSpeaking ? 'Listening...' : 'Talk';
+                            vadStatus.classList.toggle('active', isSpeaking);
+                        };
+                        
+                        await audio.play();
+                    } else {
+                        isProcessing = false;
+                        unmuteMic();  // Unmute if no audio response
+                        vadStatus.textContent = isSpeaking ? 'Listening...' : 'Talk';
+                        vadStatus.classList.toggle('active', isSpeaking);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    showError('Error processing your request');
+                    unmuteMic();  // Unmute on error
+                }
+            }
+
+            function addMessage(text, isUser = false) {
+                const messageDiv = document.createElement('p');
+                messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
+                messageDiv.textContent = text;
+                messagesContainer.appendChild(messageDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+                conversationHistory.push({
+                    role: isUser ? 'user' : 'assistant',
+                    content: text
+                });
+                
+                if (conversationHistory.length > 10) {
+                    conversationHistory.shift();
+                }
+            }
+
+            function showError(message) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'message ai-message error-message';
+                errorDiv.textContent = message;
+                messagesContainer.appendChild(errorDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+
+            // Initialize on page load
+            window.addEventListener('load', () => {
+                const welcomeMessage = "Hello! I'm your AI Voice Assistant. Click the microphone button to start speaking.";
+                addMessage(welcomeMessage, false);
+
+                const textInput = document.getElementById('textInput');
+                const sendButton = document.getElementById('sendButton');
+                const micButton = document.getElementById('micButton');
+                const cartesiaButton = document.getElementById('cartesiaButton');
+                let isListening = false;
+                let cartesiaActive = false;
+
+                // Setup Cartesia button
+                cartesiaButton.addEventListener('click', () => {
+                    cartesiaActive = !cartesiaActive;
+                    cartesiaButton.classList.toggle('active', cartesiaActive);
+                });
+
+                function sendMessage() {
+                const text = textInput.value.trim();
+                if (text) {
+                    processText(text);
+                    textInput.value = '';
+                        toggleButtons();
+                    }
+                }
+
+                function toggleButtons() {
+                    const hasText = textInput.value.trim().length > 0;
+                    sendButton.classList.toggle('hidden', !hasText);
+                    micButton.classList.toggle('hidden', hasText);
+                }
+
+                textInput.addEventListener('input', toggleButtons);
+                textInput.addEventListener('keypress', (event) => {
+                    if (event.key === 'Enter') {
+                        sendMessage();
+                    }
+                });
+
+                function toggleMic() {
+                    isMicActive = !isMicActive;
+                    micButton.classList.toggle('active', isMicActive);
+                    textInput.disabled = isMicActive;
+                    vadStatus.style.display = isMicActive ? 'block' : 'none';
+                    
+                    if (isMicActive) {
+                        initializeContinuousListening();  // Initialize only when mic button is clicked
+                        // vadStatus.textContent = 'Listening...';
+                        // vadStatus.classList.add('active');
+                        textInput.placeholder = 'Voice input active...';
+                    } else {
+                        // Stop recognition
+                        if (recognition) {
+                            recognition.stop();
+                            recognition = null;  // Reset recognition object
+                        }
+                        
+                        // Stop any active audio context
+                        if (window.audioContext) {
+                            window.audioContext.close().then(() => {
+                                window.audioContext = null;
+                            });
+                        }
+
+                        // Stop any active media streams
+                        if (window.activeStream) {
+                            window.activeStream.getTracks().forEach(track => {
+                                track.stop();
+                            });
+                            window.activeStream = null;
+                        }
+
+                        isSpeaking = false;
+                        isProcessing = false;
+                        currentTranscript = '';
+                        vadStatus.textContent = 'Talk';
+                        vadStatus.classList.remove('active');
+                        textInput.placeholder = 'Type a message...';
+                    }
+                }
+
+                // Setup send button handling
+                sendButton.addEventListener('click', sendMessage);
+
+                // Setup mic button handling
+                micButton.addEventListener('click', toggleMic);
+
+                // Initial button state
+                toggleButtons();
+            });
+        </script>
+    </body>
+</html>
