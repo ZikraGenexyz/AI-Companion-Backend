@@ -109,17 +109,14 @@
         /* Media Queries for Responsive Design */
         @media (max-width: 768px) {
             .rive-container-neko, .rive-container-luna {
-                height: 100vh;
-                width: 100%;
-                bottom: 0;
-                margin: 0 auto;
+                bottom: -80px;
             }
             .logo-container {
-                top: 25%;
-                max-width: 300px;
+                top: 20%;
+                max-width: 250px;
             }
             .store-button {
-                flex-direction: row;
+                flex-direction: column;
             }
             .footer {
                 margin-bottom: 1rem;
@@ -174,11 +171,11 @@
             // Handle high-DPI displays
             const canvasNeko = document.getElementById('rive-canvas-neko');
             const ctxNeko = canvasNeko.getContext('2d');
-            const dprNeko = window.devicePixelRatio || 1;
+            const dprNeko = Math.min(window.devicePixelRatio, 1);
 
             const canvasLuna = document.getElementById('rive-canvas-luna');
             const ctxLuna = canvasLuna.getContext('2d');
-            const dprLuna = window.devicePixelRatio || 1;
+            const dprLuna = Math.min(window.devicePixelRatio, 1);
             
             // Set canvas dimensions properly for high-DPI display
             function resizeCanvas(canvas, ctx, dpr) {
@@ -186,15 +183,17 @@
                 canvas.width = rect.width * dpr;
                 canvas.height = rect.height * dpr; 
                 ctx.scale(dpr, dpr);
+
+                console.log('dpr:', dpr);
             }
             
             // Call resize initially and on window resize
             resizeCanvas(canvasNeko, ctxNeko, dprNeko);
             resizeCanvas(canvasLuna, ctxLuna, dprLuna);
-            // window.addEventListener('resize', () => {
-            //     resizeCanvas(canvasNeko, ctxNeko, dprNeko);
-            //     resizeCanvas(canvasLuna, ctxLuna, dprLuna);
-            // });
+            window.addEventListener('resize', () => {
+                resizeCanvas(canvasNeko, ctxNeko, dprNeko);
+                resizeCanvas(canvasLuna, ctxLuna, dprLuna);
+            });
             
             // Local Rive animation file path
             const riveFile = '/static/anim/robots.riv';
@@ -208,7 +207,7 @@
                 autoplay: true,
                 artboard: 'NekoParentLogin',
                 stateMachines: 'ParentLoginState',
-                fit: rive.Fit.fit,
+                fit: rive.Fit.cover,
                 alignment: rive.Alignment.Center,
                 onLoad: () => {
                     console.log('Rive animation loaded successfully');
@@ -253,7 +252,7 @@
                 autoplay: true,
                 artboard: 'LunaParentLogin',
                 stateMachines: 'ParentLoginState',
-                fit: rive.Fit.fit,
+                fit: rive.Fit.cover,
                 alignment: rive.Alignment.Center,
                 onLoad: () => {
                     console.log('Rive animation loaded successfully');
