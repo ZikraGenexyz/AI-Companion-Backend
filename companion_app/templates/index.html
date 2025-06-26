@@ -147,12 +147,12 @@
         <canvas id="rive-canvas-neko"></canvas>
     </div>
 
-    <div class="logo-container">
-        <img src="/static/images/logo.png" class="logo">
-    </div>
-
     <div class="rive-container-luna">
         <canvas id="rive-canvas-luna"></canvas>
+    </div>
+    
+    <div class="logo-container">
+        <img src="/static/images/logo.png" class="logo">
     </div>
 
     <div class="footer">
@@ -166,6 +166,44 @@
     </div>
 
     <script>
+        // Global variable to store Rive instances
+        let riveInstanceNeko = null;
+        let riveInstanceLuna = null;
+        
+        // Define click handler functions first
+        function handleNekoClick() {
+            triggerRiveInput('wave', riveInstanceNeko);
+        }
+
+        function handleLunaClick() {
+            triggerRiveInput('wave', riveInstanceLuna);
+        }
+        
+        // Function to trigger Rive inputs programmatically
+        function triggerRiveInput(triggerName, riveInstance) {
+            if (!riveInstance) {
+                console.error('Rive instance not available');
+                return false;
+            }
+            
+            try {
+                const inputs = riveInstance.stateMachineInputs('ParentLoginState');
+                const trigger = inputs.find(input => input.name === triggerName);
+                
+                if (trigger) {
+                    trigger.fire();
+                    console.log(`Trigger fired: ${triggerName}`);
+                    return true;
+                } else {
+                    console.warn(`Trigger ${triggerName} not found in inputs`);
+                    return false;
+                }
+            } catch (err) {
+                console.error(`Error firing trigger ${triggerName}:`, err);
+                return false;
+            }
+        }
+        
         // Wait for the DOM to be fully loaded
         document.addEventListener('DOMContentLoaded', function() {
             // Handle high-DPI displays
@@ -197,8 +235,6 @@
             
             // Local Rive animation file path
             const riveFile = '/static/anim/robots.riv';
-            let riveInstanceNeko = null;
-            let riveInstanceLuna = null;
             
             // Initialize Rive with fit options
             riveInstanceNeko = new rive.Rive({
@@ -238,7 +274,7 @@
                             } catch (err) {
                                 console.error('Error firing peek trigger:', err);
                             }
-                        }, 1000);
+                        }, 250);
                     }
                 },
                 onError: (err) => {
@@ -283,7 +319,7 @@
                             } catch (err) {
                                 console.error('Error firing peek trigger:', err);
                             }
-                        }, 1000);
+                        }, 250);
                     }
                 },
                 onError: (err) => {
@@ -291,31 +327,9 @@
                 }
             });
             
-            // Function to trigger Rive inputs programmatically
-            function triggerRiveInput(triggerName) {
-                if (riveInstance && riveInstance.stateMachineInputs) {
-                    try {
-                        const inputs = riveInstance.stateMachineInputs('ParentLoginState');
-                        const trigger = inputs.find(input => input.name === triggerName);
-                        
-                        if (trigger) {
-                            trigger.fire();
-                            console.log(`Trigger fired: ${triggerName}`);
-                            return true;
-                        } else {
-                            console.warn(`Trigger ${triggerName} not found in inputs`);
-                            return false;
-                        }
-                    } catch (err) {
-                        console.error(`Error firing trigger ${triggerName}:`, err);
-                        return false;
-                    }
-                }
-                return false;
-            }
-            
-            // Make the function available globally
-            window.triggerRiveInput = triggerRiveInput;
+            // Add event listeners to the canvas elements
+            // document.querySelector('.rive-container-neko').addEventListener('click', handleNekoClick);
+            document.querySelector('.rive-container-luna').addEventListener('click', handleLunaClick);
         });
     </script>
 </body>
