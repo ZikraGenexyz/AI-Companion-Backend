@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view
 from apis.firebase_admin import send_topic_notification
 import random
 import string
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 
 class ParentAccountViews:
@@ -144,7 +144,10 @@ class ChildAccountViews:
             "gender": gender,
             "birth_date": birth_date,
             "school": school,
-            "energy_level": child.user_info['energy_level'],
+            "energy": {
+                "value": child.user_info['energy']['value'],
+                "last_updated": child.user_info['energy']['last_updated']
+            },
             "robot_type": robot_type,
             "robot_color": robot_color,
         }
@@ -199,7 +202,8 @@ class ChildAccountViews:
         amount = int(request.data['amount'])
 
         child = models.Children_Accounts.objects.filter(user_id=user_id).first()
-        child.user_info['energy_level'] += amount
+        child.user_info['energy']['value'] += amount
+        child.user_info['energy']['last_updated'] = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S.%fZ')
         child.save()
 
         send_topic_notification(
@@ -221,7 +225,8 @@ class ChildAccountViews:
         energy_level = int(request.data['energy_level'])
 
         child = models.Children_Accounts.objects.filter(user_id=user_id).first()
-        child.user_info['energy_level'] = energy_level
+        child.user_info['energy']['value'] = energy_level
+        child.user_info['energy']['last_updated'] = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S.%fZ')
         child.save()
 
         return Response({'message': 'Energy updated successfully'}, status=HTTP_200_OK)
