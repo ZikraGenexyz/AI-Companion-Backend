@@ -5,9 +5,9 @@ import './App.css';
 function App() {
   // For Neko animation
   const { rive: riveNeko, RiveComponent: RiveComponentNeko } = useRive({
-    src: '/anim/robots.riv',
-    artboard: 'NekoParentLogin',
-    stateMachines: 'ParentLoginState',
+    src: '/anim/website.riv',
+    artboard: 'HomepageNeko',
+    stateMachines: 'HomepageState',
     autoplay: true,
     layout: new Layout({
       fit: Fit.Cover,
@@ -20,9 +20,9 @@ function App() {
 
   // For Luna animation
   const { rive: riveLuna, RiveComponent: RiveComponentLuna } = useRive({
-    src: '/anim/robots.riv',
-    artboard: 'LunaParentLogin',
-    stateMachines: 'ParentLoginState',
+    src: '/anim/website.riv',
+    artboard: 'HomepageLuna',
+    stateMachines: 'HomepageState',
     autoplay: true,
     layout: new Layout({
       fit: Fit.Cover,
@@ -34,8 +34,8 @@ function App() {
   });
 
   // Create state machine inputs for peek and wave triggers
-  const peekNekoInput = useStateMachineInput(riveNeko, 'ParentLoginState', 'peek');
-  const peekLunaInput = useStateMachineInput(riveLuna, 'ParentLoginState', 'peek');
+  const peekNekoInput = useStateMachineInput(riveNeko, 'HomepageState', 'peek');
+  const peekLunaInput = useStateMachineInput(riveLuna, 'HomepageState', 'peek');
 
   // Trigger peek animations after components load
   useEffect(() => {
