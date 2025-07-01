@@ -1,0 +1,119 @@
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #003C93;
+}
+
+.footer {
+    position: fixed;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    margin-bottom: 2rem;
+    background-color: transparent;
+    width: 100%;
+    text-align: center;
+}
+
+.rive-container-neko {
+    width: 100%;
+    max-width: 1000px;
+    height: 100%;
+    max-height: 1000px;
+    position: fixed;
+    bottom: 0;
+    right: -10px;
+    background-color: transparent;
+    overflow: visible;
+}
+
+.rive-container-luna {
+    width: 100%;
+    max-width: 1000px;
+    height: 100%;
+    max-height: 1000px;
+    position: fixed;
+    bottom: 0;
+    left: -10px;
+    background-color: transparent;
+    overflow: visible;
+    transform: scaleX(-1); /* Flip horizontally */
+}
+
+.logo-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: transparent;
+    overflow: visible;
+    z-index: 100; /* Ensure logo appears above other elements */
+    width: 100%;
+    max-width: 450px;
+}
+
+.logo {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: contain;
+}
+
+.store-button {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    margin-top: 20px;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+.store-button-container {
+    display: flex;
+    background-color: #393939;
+    flex-direction: row;
+    gap: 20px;
+    margin-top: 20px;
+    justify-content: center;
+    align-items: center;
+}
+
+#rive-canvas-neko, #rive-canvas-luna {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+#app-store-badge, #play-store-badge {
+    width: 200px;
+    max-width: 45%;
+    height: auto;
+}
+
+/* Media Queries for Responsive Design */
+@media (max-width: 768px) {
+    .rive-container-neko, .rive-container-luna {
+        bottom: -80px;
+    }
+    .logo-container {
+        top: 20%;
+        max-width: 250px;
+    }
+    .store-button {
+        flex-direction: column;
+    }
+    .footer {
+        margin-bottom: 1rem;
+    }
+}
