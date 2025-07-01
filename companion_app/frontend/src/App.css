@@ -21,9 +21,9 @@ body {
 }
 
 .rive-container-neko {
-    width: 100%;
+    width: 100vh;
     max-width: 1000px;
-    height: 100%;
+    height: 100vh;
     max-height: 1000px;
     position: fixed;
     bottom: 0;
@@ -33,16 +33,15 @@ body {
 }
 
 .rive-container-luna {
-    width: 100%;
+    width: 100vh;
     max-width: 1000px;
-    height: 100%;
+    height: 100vh;
     max-height: 1000px;
     position: fixed;
     bottom: 0;
     left: -10px;
     background-color: transparent;
     overflow: visible;
-    transform: scaleX(-1); /* Flip horizontally */
 }
 
 /* Make sure the Rive canvas fills the container */
@@ -106,7 +105,9 @@ body {
 /* Media Queries for Responsive Design */
 @media (max-width: 768px) {
     .rive-container-neko, .rive-container-luna {
-        bottom: -80px;
+        bottom: 12vh;
+        width: 60vh;
+        height: 60vh;
     }
     .logo-container {
         top: 20%;

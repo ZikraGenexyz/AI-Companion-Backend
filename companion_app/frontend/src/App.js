@@ -57,13 +57,6 @@ function App() {
     return () => clearTimeout(timer);
   }, [peekNekoInput, peekLunaInput]);
 
-  // const handleLunaClick = () => {
-  //   if (waveLunaInput) {
-  //     waveLunaInput.fire();
-  //     console.log('Luna wave trigger fired');
-  //   }
-  // };
-
   return (
     <>
       <div className="rive-container-neko">
