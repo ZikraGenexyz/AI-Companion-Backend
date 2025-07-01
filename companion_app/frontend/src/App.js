@@ -1,156 +1,77 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useRive, useStateMachineInput, Layout, Fit, Alignment } from '@rive-app/react-canvas';
 import './App.css';
 
 function App() {
-  const canvasNekoRef = useRef(null);
-  const canvasLunaRef = useRef(null);
-  const riveInstanceNekoRef = useRef(null);
-  const riveInstanceLunaRef = useRef(null);
+  // For Neko animation
+  const { rive: riveNeko, RiveComponent: RiveComponentNeko } = useRive({
+    src: '/anim/robots.riv',
+    artboard: 'NekoParentLogin',
+    stateMachines: 'ParentLoginState',
+    autoplay: true,
+    layout: new Layout({
+      fit: Fit.Cover,
+      alignment: Alignment.Center,
+    }),
+    onLoad: () => {
+      console.log('Neko animation loaded successfully');
+    }
+  });
 
+  // For Luna animation
+  const { rive: riveLuna, RiveComponent: RiveComponentLuna } = useRive({
+    src: '/anim/robots.riv',
+    artboard: 'LunaParentLogin',
+    stateMachines: 'ParentLoginState',
+    autoplay: true,
+    layout: new Layout({
+      fit: Fit.Cover,
+      alignment: Alignment.Center,
+    }),
+    onLoad: () => {
+      console.log('Luna animation loaded successfully');
+    }
+  });
+
+  // Create state machine inputs for peek and wave triggers
+  const peekNekoInput = useStateMachineInput(riveNeko, 'ParentLoginState', 'peek');
+  const peekLunaInput = useStateMachineInput(riveLuna, 'ParentLoginState', 'peek');
+
+  // Trigger peek animations after components load
   useEffect(() => {
-    // Load Rive runtime
-    if (window.rive) {
-      initRiveAnimations();
-    } else {
-      // If Rive isn't loaded yet, wait for it
-      const checkRive = setInterval(() => {
-        if (window.rive) {
-          clearInterval(checkRive);
-          initRiveAnimations();
-        }
-      }, 100);
-    }
-
-    // Handle window resize
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
-
-  const initRiveAnimations = () => {
-    const rive = window.rive;
-    const riveFile = '/anim/robots.riv';
-
-    // Initialize Neko animation
-    if (canvasNekoRef.current) {
-      const canvasNeko = canvasNekoRef.current;
-      const ctxNeko = canvasNeko.getContext('2d');
-      const dprNeko = Math.min(window.devicePixelRatio, 1);
-      
-      resizeCanvas(canvasNeko, ctxNeko, dprNeko);
-      
-      riveInstanceNekoRef.current = new rive.Rive({
-        src: riveFile,
-        canvas: canvasNeko,
-        autoplay: true,
-        artboard: 'NekoParentLogin',
-        stateMachines: 'ParentLoginState',
-        fit: rive.Fit.cover,
-        alignment: rive.Alignment.Center,
-        onLoad: () => {
-          console.log('Neko animation loaded successfully');
-          
-          // Try to fire the peek trigger after a short delay
-          setTimeout(() => {
-            triggerRiveInput('peek', riveInstanceNekoRef.current);
-          }, 250);
-        },
-        onError: (err) => {
-          console.error('Error loading Neko animation:', err);
-        }
-      });
-    }
-
-    // Initialize Luna animation
-    if (canvasLunaRef.current) {
-      const canvasLuna = canvasLunaRef.current;
-      const ctxLuna = canvasLuna.getContext('2d');
-      const dprLuna = Math.min(window.devicePixelRatio, 1);
-      
-      resizeCanvas(canvasLuna, ctxLuna, dprLuna);
-      
-      riveInstanceLunaRef.current = new rive.Rive({
-        src: riveFile,
-        canvas: canvasLuna,
-        autoplay: true,
-        artboard: 'LunaParentLogin',
-        stateMachines: 'ParentLoginState',
-        fit: rive.Fit.cover,
-        alignment: rive.Alignment.Center,
-        onLoad: () => {
-          console.log('Luna animation loaded successfully');
-          
-          // Try to fire the peek trigger after a short delay
-          setTimeout(() => {
-            triggerRiveInput('peek', riveInstanceLunaRef.current);
-          }, 250);
-        },
-        onError: (err) => {
-          console.error('Error loading Luna animation:', err);
-        }
-      });
-    }
-  };
-
-  const handleResize = () => {
-    if (canvasNekoRef.current && canvasLunaRef.current) {
-      const ctxNeko = canvasNekoRef.current.getContext('2d');
-      const ctxLuna = canvasLunaRef.current.getContext('2d');
-      const dpr = Math.min(window.devicePixelRatio, 1);
-      
-      resizeCanvas(canvasNekoRef.current, ctxNeko, dpr);
-      resizeCanvas(canvasLunaRef.current, ctxLuna, dpr);
-    }
-  };
-
-  const resizeCanvas = (canvas, ctx, dpr) => {
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
-  };
-
-  const triggerRiveInput = (triggerName, riveInstance) => {
-    if (!riveInstance) {
-      console.error('Rive instance not available');
-      return false;
-    }
-    
-    try {
-      const inputs = riveInstance.stateMachineInputs('ParentLoginState');
-      const trigger = inputs.find(input => input.name === triggerName);
-      
-      if (trigger) {
-        trigger.fire();
-        console.log(`Trigger fired: ${triggerName}`);
-        return true;
-      } else {
-        console.warn(`Trigger ${triggerName} not found in inputs`);
-        return false;
+    const triggerPeek = () => {
+      if (peekNekoInput) {
+        peekNekoInput.fire();
+        console.log('Neko peek trigger fired');
       }
-    } catch (err) {
-      console.error(`Error firing trigger ${triggerName}:`, err);
-      return false;
-    }
-  };
+      
+      if (peekLunaInput) {
+        peekLunaInput.fire();
+        console.log('Luna peek trigger fired');
+      }
+    };
+    
+    // Add a small delay to ensure the animations are ready
+    const timer = setTimeout(triggerPeek, 250);
+    
+    return () => clearTimeout(timer);
+  }, [peekNekoInput, peekLunaInput]);
 
-  const handleNekoClick = () => {
-    triggerRiveInput('wave', riveInstanceNekoRef.current);
-  };
-
-  const handleLunaClick = () => {
-    triggerRiveInput('wave', riveInstanceLunaRef.current);
-  };
+  // const handleLunaClick = () => {
+  //   if (waveLunaInput) {
+  //     waveLunaInput.fire();
+  //     console.log('Luna wave trigger fired');
+  //   }
+  // };
 
   return (
     <>
-      <div className="rive-container-neko" onClick={handleNekoClick}>
-        <canvas id="rive-canvas-neko" ref={canvasNekoRef}></canvas>
+      <div className="rive-container-neko">
+        <RiveComponentNeko />
       </div>
 
-      <div className="rive-container-luna" onClick={handleLunaClick}>
-        <canvas id="rive-canvas-luna" ref={canvasLunaRef}></canvas>
+      <div className="rive-container-luna">
+        <RiveComponentLuna />
       </div>
       
       <div className="logo-container">
