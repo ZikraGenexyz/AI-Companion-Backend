@@ -112,7 +112,10 @@ class ChildAccountViews:
             "gender": "",
             "birth_date": birth_date,
             "school": "",
-            "energy_level": 25,
+            "energy": {
+                "value": 3600,
+                "last_updated": datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S.%fZ')
+            },
             "robot_type": robot_type,
             "robot_color": robot_color,
         })
