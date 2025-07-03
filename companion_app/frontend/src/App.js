@@ -5,7 +5,7 @@ import './App.css';
 function App() {
   // For Neko animation
   const { rive: riveNeko, RiveComponent: RiveComponentNeko } = useRive({
-    src: '/anim/website.riv',
+    src: '/anim/website2.riv',
     artboard: 'HomepageNeko',
     stateMachines: 'HomepageState',
     autoplay: true,
@@ -20,7 +20,7 @@ function App() {
 
   // For Luna animation
   const { rive: riveLuna, RiveComponent: RiveComponentLuna } = useRive({
-    src: '/anim/website.riv',
+    src: '/anim/website2.riv',
     artboard: 'HomepageLuna',
     stateMachines: 'HomepageState',
     autoplay: true,
@@ -35,7 +35,7 @@ function App() {
 
   // For Stars animation
   const { rive: riveStars, RiveComponent: RiveComponentStars } = useRive({
-    src: '/anim/website.riv',
+    src: '/anim/website2.riv',
     artboard: 'Stars',
     stateMachines: 'StarsState',
     autoplay: true,
