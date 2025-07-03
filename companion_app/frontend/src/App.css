@@ -6,7 +6,7 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background-color: #003C93;
+    background-color: #310091;
 }
 
 .footer {
@@ -18,6 +18,16 @@ body {
     background-color: transparent;
     width: 100%;
     text-align: center;
+}
+
+.rive-container-stars {
+    width: 187.5vh;
+    height: 75vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
 }
 
 .rive-container-neko {
@@ -58,7 +68,7 @@ body {
     justify-content: center;
     align-items: center;
     position: fixed;
-    top: 40%;
+    top: 42.5%;
     left: 50%;
     transform: translate(-50%, -50%);
     background-color: transparent;
@@ -75,7 +85,7 @@ body {
     object-fit: contain;
 }
 
-.store-button {
+.store-button-container {
     display: flex;
     flex-direction: row;
     gap: 20px;
@@ -86,43 +96,59 @@ body {
     flex-wrap: wrap;
 }
 
-.store-button-container {
+.store-button {
     display: flex;
-    background-color: #393939;
+    max-width: 215px;
+    background-color: transparent;
+    border: 2px solid #ffffff;
+    border-radius: 20px;
     flex-direction: row;
-    gap: 20px;
-    margin-top: 20px;
     justify-content: center;
     align-items: center;
+    padding: 6px 14px;
+    background-color: #ffffff00;
+}
+
+.store-button:hover {
+    cursor: pointer;
 }
 
 #app-store-badge, #play-store-badge {
-    width: 200px;
-    max-width: 45%;
+    width: 100%;
     height: auto;
+    max-height: 100%;
+    object-fit: contain;   
 }
 
 /* Media Queries for Responsive Design */
 @media (max-width: 768px) {
     .rive-container-neko {
-        bottom: 10vh;
-        width: 45vh;
-        height: 60vh;
+        bottom: 14vh;
+        width: 37.5vh;
+        height: 50vh;
     }
-    
     .rive-container-luna {
-        bottom: 10vh;
-        width: 30vh;
+        bottom: 14vh;
+        width: 25vh;
+        height: 50vh;
+    }
+    .rive-container-stars {
         height: 60vh;
     }
     .logo-container {
         top: 20%;
         max-width: 250px;
     }
-    .store-button {
+    .store-button-container {
         flex-direction: column;
     }
     .footer {
         margin-bottom: 1rem;
+    }
+    .store-button {
+        max-width: 200px;
+    }
+    #app-store-badge, #play-store-badge {
+        width: 100%;
     }
 }

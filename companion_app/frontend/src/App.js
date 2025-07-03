@@ -33,9 +33,30 @@ function App() {
     }
   });
 
+  // For Stars animation
+  const { rive: riveStars, RiveComponent: RiveComponentStars } = useRive({
+    src: '/anim/website.riv',
+    artboard: 'Stars',
+    stateMachines: 'StarsState',
+    autoplay: true,
+    layout: new Layout({
+      fit: Fit.Cover,
+      alignment: Alignment.Center,
+    }),
+    onLoad: () => {
+      console.log('Stars animation loaded successfully');
+    }
+  });
+
   // Create state machine inputs for peek and wave triggers
   const peekNekoInput = useStateMachineInput(riveNeko, 'HomepageState', 'peek');
   const peekLunaInput = useStateMachineInput(riveLuna, 'HomepageState', 'peek');
+
+  // State for image sources
+  const [appStoreImg, setAppStoreImg] = useState('/images/appstore.png');
+  const [playStoreImg, setPlayStoreImg] = useState('/images/playstore.png');
+  const [playStoreButtonBg, setPlayStoreButtonBg] = useState('#FFFFFF00');
+  const [appStoreButtonBg, setAppStoreButtonBg] = useState('#FFFFFF00');
 
   // Trigger peek animations after components load
   useEffect(() => {
@@ -59,6 +80,10 @@ function App() {
 
   return (
     <>
+      <div className="rive-container-stars">
+        <RiveComponentStars />
+      </div>
+
       <div className="rive-container-neko">
         <RiveComponentNeko />
       </div>
@@ -68,13 +93,47 @@ function App() {
       </div>
       
       <div className="logo-container">
-        <img src="/images/logo2.png" className="logo" alt="Wonderkid Logo" />
+        <img src="/images/logo.png" className="logo" alt="Wonderkid Logo" />
       </div>
 
       <div className="footer">
-        <div className="store-button">
-          <img src="/images/app-store-badge.png" id="app-store-badge" alt="Download on App Store" />
-          <img src="/images/play-store-badge.png" id="play-store-badge" alt="Get it on Google Play" />
+        <div className="store-button-container">
+          <div 
+            className="store-button"
+            style={{ backgroundColor: playStoreButtonBg }}
+            onMouseOver={() => {
+              setPlayStoreImg('/images/playstore.png');
+              setAppStoreImg('/images/appstore_dark.png');
+              setPlayStoreButtonBg('#FFFFFF');
+              setAppStoreButtonBg('#FFFFFF00');
+            }}
+            onMouseOut={() => {
+              setPlayStoreImg('/images/playstore.png');
+              setAppStoreImg('/images/appstore.png');
+              setPlayStoreButtonBg('#FFFFFF00');
+              setAppStoreButtonBg('#FFFFFF00');
+            }}
+          >
+            <img src={appStoreImg} id="app-store-badge" alt="Download on App Store" />
+          </div>
+          <div 
+            className="store-button"
+            style={{ backgroundColor: appStoreButtonBg }}
+            onMouseOver={() => {
+              setPlayStoreImg('/images/playstore_dark.png');
+              setAppStoreImg('/images/appstore.png');
+              setPlayStoreButtonBg('#FFFFFF00');
+              setAppStoreButtonBg('#FFFFFF');
+            }}
+            onMouseOut={() => {
+              setPlayStoreImg('/images/playstore.png');
+              setAppStoreImg('/images/appstore.png');
+              setPlayStoreButtonBg('#FFFFFF00');
+              setAppStoreButtonBg('#FFFFFF00');
+            }}
+          >
+            <img src={playStoreImg} id="play-store-badge" alt="Get it on Google Play" />
+          </div>
         </div>
       </div>
     </>
