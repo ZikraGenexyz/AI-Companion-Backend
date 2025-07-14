@@ -113,8 +113,6 @@ class MissionViews:
 
                 delta_time = due_datetime - created_datetime
 
-                print("DELTA TIME: ", delta_time)
-
                 if delta_time == datetime.timedelta(minutes=0):
                     send_topic_notification(
                         topic=user_id,
