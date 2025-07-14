@@ -7,6 +7,6 @@ class ApisConfig(AppConfig):
     
     def ready(self):
         # Don't start scheduler when running management commands
-        if 'runserver' in sys.argv or 'uwsgi' in sys.argv or 'gunicorn' in sys.argv:
-            from apis.scheduler import start
-            start()
+        # if 'runserver' in sys.argv or 'uwsgi' in sys.argv or 'gunicorn' in sys.argv:
+        from apis.scheduler import start
+        start()

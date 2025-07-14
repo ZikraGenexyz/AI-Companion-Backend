@@ -28,6 +28,7 @@ scheduler = BackgroundScheduler({
     'timezone': JAKARTA_TZ
 })
 
+
 # Define retry logic as a separate function instead of a decorator
 def retry_on_failure(max_retries=3):
     """
